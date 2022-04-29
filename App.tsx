@@ -1,21 +1,17 @@
 import "expo-dev-client";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { useDeviceContext } from "twrnc";
+import tw from "./src/tailwind";
 
 export default function App() {
+  useDeviceContext(tw);
   return (
-    <View style={styles.container}>
-      <Text>Hello World!</Text>
+    <View
+      style={tw.style("flex-1", "bg-white", "items-center", "justify-center")}
+    >
+      <Text>Hello World?</Text>
       <StatusBar style="auto" />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
