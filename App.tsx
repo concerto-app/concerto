@@ -11,13 +11,15 @@ import AppLoading from "expo-app-loading";
 import { NavigationContainer } from "@react-navigation/native";
 import Stack from "./src/navigation/Stack";
 import Play from "./src/screens/Play";
+import Settings from "./src/screens/Settings";
+import { gestureHandlerRootHOC } from "react-native-gesture-handler";
 
 const fonts = {
   Nunito_700Bold,
   Nunito_800ExtraBold,
 };
 
-const emojiCodes = [
+const availableEmojiCodes = [
   "1f349",
   "1f34b",
   "1f34c",
@@ -59,10 +61,14 @@ export default function App() {
       >
         <Stack.Screen
           name="main"
-          component={Main}
-          initialParams={{ emojiCodes: emojiCodes }}
+          component={gestureHandlerRootHOC(Main)}
+          initialParams={{ availableEmojiCodes: availableEmojiCodes }}
         />
-        <Stack.Screen name="play" component={Play} />
+        <Stack.Screen name="play" component={gestureHandlerRootHOC(Play)} />
+        <Stack.Screen
+          name="settings"
+          component={gestureHandlerRootHOC(Settings)}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

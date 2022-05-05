@@ -1,25 +1,31 @@
-import tw from "../tailwind";
-import Slot from "./Slot";
+import tw from "../../tailwind";
+import Slot from "../Slot";
 import Emoji from "./Emoji";
 import ReactNative from "react-native";
 
 export type EmojiCodeProps = {
-  codes: Array<string | null>;
+  code: Code;
+  length: number;
   size?: number;
   margin?: number;
 };
 
 export default function EmojiCode({
-  codes,
+  code,
+  length,
   size = 50,
   margin = 12,
 }: EmojiCodeProps) {
+  const internalCode = [
+    ...code,
+    ...Array(Math.max(0, length - code.length)).fill(null),
+  ];
   return (
     <ReactNative.View style={tw.style("flex-row")}>
-      {codes.map((code, index) => (
+      {internalCode.map((code, index) => (
         <Slot key={index} style={tw.style(`m-[${margin}]`)}>
           {code !== null ? (
-            <Emoji code={code} size={size} />
+            <Emoji id={code} size={size} />
           ) : (
             <ReactNative.View style={{ width: size, height: size }} />
           )}
