@@ -24,8 +24,10 @@ export default function Main({ route, navigation }: MainProps) {
   }, [code]);
 
   useEffect(() => {
-    changeScreenOrientation(Orientation.DEFAULT).then().catch(console.log);
-  });
+    navigation.addListener("focus", () => {
+      changeScreenOrientation(Orientation.DEFAULT).then().catch(console.log);
+    });
+  }, [navigation]);
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>

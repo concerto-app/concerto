@@ -95,8 +95,10 @@ export default function Play({ route, navigation }: PlayProps) {
   }, []);
 
   useEffect(() => {
-    changeScreenOrientation(Orientation.LANDSCAPE).then().catch(console.log);
-  });
+    navigation.addListener("focus", () => {
+      changeScreenOrientation(Orientation.LANDSCAPE).then().catch(console.log);
+    });
+  }, [navigation]);
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>
