@@ -14,7 +14,7 @@ export default function EmojiSymbol({
   shadowX = 0,
   shadowY = 8,
   shadowBlur = 10,
-  shadowColor = "#0000001a",
+  shadowColor = "#00000044",
   ...otherProps
 }: EmojiSymbolProps) {
   return (

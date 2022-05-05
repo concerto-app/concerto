@@ -1,28 +1,32 @@
-import Grid from "./Grid";
+import Grid from "../Grid";
 import ReactNative from "react-native";
 import EmojiSymbol from "./EmojiSymbol";
+import { BorderlessButton, ScrollView } from "react-native-gesture-handler";
+import React from "react";
 
 export type EmojiGridProps = ReactNative.ViewProps & {
-  emojiCodes: Array<string>;
+  emojiIds: Array<EmojiId>;
   horizontal?: boolean;
   edgeMargin?: number;
   emojiMargin?: number;
   emojiSize?: number;
+  emojiCanvasScale?: number;
   onEmojiSelected?: (emojiCode: string) => void;
 };
 
 export default function EmojiGrid({
-  emojiCodes,
+  emojiIds,
   horizontal = true,
   edgeMargin = 32,
   emojiMargin = 8,
   emojiSize = 40,
+  emojiCanvasScale = 4,
   onEmojiSelected = () => {},
   style,
   ...props
 }: EmojiGridProps) {
   return (
-    <ReactNative.ScrollView
+    <ScrollView
       horizontal={horizontal}
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
@@ -35,17 +39,16 @@ export default function EmojiGrid({
         ]}
         {...props}
       >
-        {emojiCodes.map((code, index) => (
-          <ReactNative.Pressable
-            key={index}
-            onPress={() => onEmojiSelected(code)}
-          >
-            <ReactNative.View style={{ margin: emojiMargin }}>
-              <EmojiSymbol code={code} size={emojiSize} />
-            </ReactNative.View>
-          </ReactNative.Pressable>
+        {emojiIds.map((code, index) => (
+          <ReactNative.View key={index}>
+            <BorderlessButton onPress={() => onEmojiSelected(code)}>
+              <ReactNative.View style={{ margin: emojiMargin }}>
+                <EmojiSymbol id={code} size={emojiSize} />
+              </ReactNative.View>
+            </BorderlessButton>
+          </ReactNative.View>
         ))}
       </Grid>
-    </ReactNative.ScrollView>
+    </ScrollView>
   );
 }

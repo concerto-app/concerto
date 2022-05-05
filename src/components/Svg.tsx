@@ -49,8 +49,7 @@ export default function Svg({
     0.5 * canvasHeight - 0.5 * height,
   ];
   return (
-    <ReactNative.View>
-      <ReactNative.View style={{ width: width, height: height }} />
+    <ReactNative.View style={{ width: width, height: height }}>
       <Canvas
         style={tw.style("absolute", {
           left: -offsetX,
