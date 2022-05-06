@@ -5,11 +5,13 @@ import Heading from "./text/Heading";
 export type IndicatorProps = Omit<ReactNative.ViewProps, "children"> & {
   size: number;
   text: string;
+  color?: string;
 };
 
 export default function Indicator({
   size,
   text,
+  color = "#dc2626",
   style,
   ...otherProps
 }: IndicatorProps) {
@@ -17,15 +19,11 @@ export default function Indicator({
     <ReactNative.View
       style={[
         style,
-        tw.style(
-          "items-center",
-          "justify-center",
-          "rounded-full",
-          "bg-red-600"
-        ),
+        tw.style("items-center", "justify-center", "rounded-full"),
         {
           width: size,
           height: size,
+          backgroundColor: color,
         },
       ]}
       {...otherProps}
