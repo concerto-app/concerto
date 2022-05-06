@@ -132,6 +132,7 @@ const MemoizedWhiteKey = React.memo(
     return JSON.stringify(otherPrevProps) === JSON.stringify(otherNextProps);
   }
 );
+
 const MemoizedBlackKey = React.memo(
   InternalBlackKey,
   (prevProps, nextProps) => {
