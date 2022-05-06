@@ -3,7 +3,7 @@ import Slot from "../Slot";
 import Emoji from "./Emoji";
 import ReactNative from "react-native";
 
-export type EmojiCodeProps = {
+export type EmojiCodeProps = ReactNative.ViewProps & {
   code: Code;
   length: number;
   size?: number;
@@ -15,15 +15,17 @@ export default function EmojiCode({
   length,
   size = 50,
   margin = 12,
+  style,
+  ...otherProps
 }: EmojiCodeProps) {
   const internalCode = [
     ...code,
     ...Array(Math.max(0, length - code.length)).fill(null),
   ];
   return (
-    <ReactNative.View style={tw.style("flex-row")}>
+    <ReactNative.View style={[style, tw.style("flex-row")]} {...otherProps}>
       {internalCode.map((code, index) => (
-        <Slot key={index} style={tw.style(`m-[${margin}]`)}>
+        <Slot key={index} style={{ margin: margin }}>
           {code !== null ? (
             <Emoji id={code} size={size} />
           ) : (
