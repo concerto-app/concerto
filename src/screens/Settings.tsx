@@ -1,9 +1,8 @@
 import tw from "../tailwind";
 import ReactNative from "react-native";
 import { SettingsProps } from "../navigation/types";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import Heading from "../components/text/Heading";
-import { changeScreenOrientation, Orientation } from "../utils";
 import Marker from "../components/Marker";
 import Icon from "../components/Icon";
 import { BorderlessButton, ScrollView } from "react-native-gesture-handler";
@@ -85,12 +84,6 @@ export default function Settings({ route, navigation }: SettingsProps) {
   const { code, users } = route.params;
 
   const handleCloseButtonPress = useCallback(() => navigation.goBack(), []);
-
-  useEffect(() => {
-    navigation.addListener("focus", () => {
-      changeScreenOrientation(Orientation.DEFAULT).then().catch(console.log);
-    });
-  }, [navigation]);
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>

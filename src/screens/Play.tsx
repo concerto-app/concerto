@@ -1,13 +1,13 @@
 import tw from "../tailwind";
 import ReactNative from "react-native";
 import { PlayProps } from "../navigation/types";
-import React, { useEffect, useState } from "react";
-import { changeScreenOrientation, mapMap, Orientation } from "../utils";
+import React, { useState } from "react";
 import Keyboard from "../components/keyboard/Keyboard";
 import { BorderlessButton, ScrollView } from "react-native-gesture-handler";
 import Marker from "../components/Marker";
 import Emoji from "../components/emojis/Emoji";
 import Indicator from "../components/Indicator";
+import { mapMap } from "../utils";
 
 type KeyboardState = Map<Key, UserId>;
 
@@ -93,12 +93,6 @@ export default function Play({ route, navigation }: PlayProps) {
       users: getAllUsers().map((user) => [user, getUserEmojiCode(user)]),
     });
   }, []);
-
-  useEffect(() => {
-    navigation.addListener("focus", () => {
-      changeScreenOrientation(Orientation.LANDSCAPE).then().catch(console.log);
-    });
-  }, [navigation]);
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>

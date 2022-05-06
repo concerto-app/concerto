@@ -63,11 +63,17 @@ export default function App() {
           name="main"
           component={gestureHandlerRootHOC(Main)}
           initialParams={{ availableEmojiCodes: availableEmojiCodes }}
+          options={{ orientation: "default" }}
         />
-        <Stack.Screen name="play" component={gestureHandlerRootHOC(Play)} />
+        <Stack.Screen
+          name="play"
+          component={gestureHandlerRootHOC(Play)}
+          options={{ orientation: "landscape" }}
+        />
         <Stack.Screen
           name="settings"
           component={gestureHandlerRootHOC(Settings)}
+          options={{ orientation: "default" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -6,7 +6,6 @@ import EmojiCode from "../components/emojis/EmojiCode";
 import { useEffect, useState } from "react";
 import EmojiGrid from "../components/emojis/EmojiGrid";
 import { MainProps } from "../navigation/types";
-import { changeScreenOrientation, Orientation } from "../utils";
 
 export default function Main({ route, navigation }: MainProps) {
   const { availableEmojiCodes, codeLength = 3 } = route.params;
@@ -22,12 +21,6 @@ export default function Main({ route, navigation }: MainProps) {
     setCode([]);
     navigation.navigate("play", { code: code });
   }, [code]);
-
-  useEffect(() => {
-    navigation.addListener("focus", () => {
-      changeScreenOrientation(Orientation.DEFAULT).then().catch(console.log);
-    });
-  }, [navigation]);
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>
