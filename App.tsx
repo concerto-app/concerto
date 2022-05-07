@@ -7,12 +7,13 @@ import {
   Nunito_800ExtraBold,
   useFonts,
 } from "@expo-google-fonts/nunito";
-import AppLoading from "expo-app-loading";
 import { NavigationContainer } from "@react-navigation/native";
 import Stack from "./src/navigation/Stack";
 import Play from "./src/screens/Play";
 import Settings from "./src/screens/Settings";
 import { gestureHandlerRootHOC } from "react-native-gesture-handler";
+import * as SplashScreen from "expo-splash-screen";
+import React from "react";
 
 const fonts = {
   Nunito_700Bold,
@@ -48,10 +49,19 @@ export default function App() {
 
   const [fontsLoaded] = useFonts(fonts);
 
-  if (!fontsLoaded) return <AppLoading />;
+  const onLayoutReady = React.useCallback(
+    async () => await SplashScreen.hideAsync(),
+    []
+  );
+
+  React.useEffect(() => {
+    SplashScreen.preventAutoHideAsync().then();
+  }, []);
+
+  if (!fontsLoaded) return null;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer onReady={onLayoutReady}>
       <Stack.Navigator
         initialRouteName="main"
         screenOptions={{
