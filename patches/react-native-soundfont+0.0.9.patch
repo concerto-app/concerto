@@ -1,0 +1,153 @@
+diff --git a/node_modules/react-native-soundfont/android/.gradle/7.4.2/checksums/checksums.lock b/node_modules/react-native-soundfont/android/.gradle/7.4.2/checksums/checksums.lock
+new file mode 100644
+index 0000000..3247c34
+Binary files /dev/null and b/node_modules/react-native-soundfont/android/.gradle/7.4.2/checksums/checksums.lock differ
+diff --git a/node_modules/react-native-soundfont/android/.gradle/7.4.2/checksums/md5-checksums.bin b/node_modules/react-native-soundfont/android/.gradle/7.4.2/checksums/md5-checksums.bin
+new file mode 100644
+index 0000000..25adb09
+Binary files /dev/null and b/node_modules/react-native-soundfont/android/.gradle/7.4.2/checksums/md5-checksums.bin differ
+diff --git a/node_modules/react-native-soundfont/android/.gradle/7.4.2/checksums/sha1-checksums.bin b/node_modules/react-native-soundfont/android/.gradle/7.4.2/checksums/sha1-checksums.bin
+new file mode 100644
+index 0000000..70492be
+Binary files /dev/null and b/node_modules/react-native-soundfont/android/.gradle/7.4.2/checksums/sha1-checksums.bin differ
+diff --git a/node_modules/react-native-soundfont/android/.gradle/7.4.2/dependencies-accessors/dependencies-accessors.lock b/node_modules/react-native-soundfont/android/.gradle/7.4.2/dependencies-accessors/dependencies-accessors.lock
+new file mode 100644
+index 0000000..9b3e55a
+Binary files /dev/null and b/node_modules/react-native-soundfont/android/.gradle/7.4.2/dependencies-accessors/dependencies-accessors.lock differ
+diff --git a/node_modules/react-native-soundfont/android/.gradle/7.4.2/dependencies-accessors/gc.properties b/node_modules/react-native-soundfont/android/.gradle/7.4.2/dependencies-accessors/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-soundfont/android/.gradle/7.4.2/executionHistory/executionHistory.lock b/node_modules/react-native-soundfont/android/.gradle/7.4.2/executionHistory/executionHistory.lock
+new file mode 100644
+index 0000000..3d9c649
+Binary files /dev/null and b/node_modules/react-native-soundfont/android/.gradle/7.4.2/executionHistory/executionHistory.lock differ
+diff --git a/node_modules/react-native-soundfont/android/.gradle/7.4.2/fileChanges/last-build.bin b/node_modules/react-native-soundfont/android/.gradle/7.4.2/fileChanges/last-build.bin
+new file mode 100644
+index 0000000..f76dd23
+Binary files /dev/null and b/node_modules/react-native-soundfont/android/.gradle/7.4.2/fileChanges/last-build.bin differ
+diff --git a/node_modules/react-native-soundfont/android/.gradle/7.4.2/fileHashes/fileHashes.lock b/node_modules/react-native-soundfont/android/.gradle/7.4.2/fileHashes/fileHashes.lock
+new file mode 100644
+index 0000000..6292144
+Binary files /dev/null and b/node_modules/react-native-soundfont/android/.gradle/7.4.2/fileHashes/fileHashes.lock differ
+diff --git a/node_modules/react-native-soundfont/android/.gradle/7.4.2/gc.properties b/node_modules/react-native-soundfont/android/.gradle/7.4.2/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-soundfont/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/react-native-soundfont/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+new file mode 100644
+index 0000000..d7150eb
+Binary files /dev/null and b/node_modules/react-native-soundfont/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+diff --git a/node_modules/react-native-soundfont/android/.gradle/buildOutputCleanup/cache.properties b/node_modules/react-native-soundfont/android/.gradle/buildOutputCleanup/cache.properties
+new file mode 100644
+index 0000000..2783e06
+--- /dev/null
++++ b/node_modules/react-native-soundfont/android/.gradle/buildOutputCleanup/cache.properties
+@@ -0,0 +1,2 @@
++#Sat May 07 20:37:05 CEST 2022
++gradle.version=7.4.2
+diff --git a/node_modules/react-native-soundfont/android/.gradle/vcs-1/gc.properties b/node_modules/react-native-soundfont/android/.gradle/vcs-1/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-soundfont/android/.gradle/workspace-id.txt b/node_modules/react-native-soundfont/android/.gradle/workspace-id.txt
+new file mode 100644
+index 0000000..81f562f
+Binary files /dev/null and b/node_modules/react-native-soundfont/android/.gradle/workspace-id.txt differ
+diff --git a/node_modules/react-native-soundfont/android/.gradle/workspace-id.txt.lock b/node_modules/react-native-soundfont/android/.gradle/workspace-id.txt.lock
+new file mode 100644
+index 0000000..f19710e
+Binary files /dev/null and b/node_modules/react-native-soundfont/android/.gradle/workspace-id.txt.lock differ
+diff --git a/node_modules/react-native-soundfont/android/build.gradle b/node_modules/react-native-soundfont/android/build.gradle
+index 19fc436..6c08a50 100644
+--- a/node_modules/react-native-soundfont/android/build.gradle
++++ b/node_modules/react-native-soundfont/android/build.gradle
+@@ -10,7 +10,7 @@ def safeExtGet(prop, fallback) {
+ }
+ 
+ apply plugin: 'com.android.library'
+-apply plugin: 'maven'
++apply plugin: 'maven-publish'
+ 
+ buildscript {
+     // The Android Gradle plugin is only required when opening the android folder stand-alone.
+@@ -20,16 +20,16 @@ buildscript {
+     if (project == rootProject) {
+         repositories {
+             google()
+-            jcenter()
++            mavenCentral()
+         }
+         dependencies {
+-            classpath 'com.android.tools.build:gradle:3.4.1'
++            classpath 'com.android.tools.build:gradle:7.1.3'
+         }
+     }
+ }
+ 
+ apply plugin: 'com.android.library'
+-apply plugin: 'maven'
++apply plugin: 'maven-publish'
+ 
+ android {
+     compileSdkVersion safeExtGet('compileSdkVersion', DEFAULT_COMPILE_SDK_VERSION)
+@@ -57,7 +57,7 @@ repositories {
+         url "$rootDir/../node_modules/jsc-android/dist"
+     }
+     google()
+-    jcenter()
++    mavenCentral()
+ }
+ 
+ dependencies {
+@@ -94,22 +94,8 @@ def configureReactNativePom(def pom) {
+ }
+ 
+ afterEvaluate { project ->
+-    // some Gradle build hooks ref:
+-    // https://www.oreilly.com/library/view/gradle-beyond-the/9781449373801/ch03.html
+-    task androidJavadoc(type: Javadoc) {
+-        source = android.sourceSets.main.java.srcDirs
+-        classpath += files(android.bootClasspath)
+-        classpath += files(project.getConfigurations().getByName('compile').asList())
+-        include '**/*.java'
+-    }
+-
+-    task androidJavadocJar(type: Jar, dependsOn: androidJavadoc) {
+-        classifier = 'javadoc'
+-        from androidJavadoc.destinationDir
+-    }
+-
+     task androidSourcesJar(type: Jar) {
+-        classifier = 'sources'
++        archiveClassifier = 'sources'
+         from android.sourceSets.main.java.srcDirs
+         include '**/*.java'
+     }
+@@ -119,21 +105,15 @@ afterEvaluate { project ->
+         def javaCompileTask = variant.javaCompileProvider.get()
+ 
+         task "jar${name}"(type: Jar, dependsOn: javaCompileTask) {
+-            from javaCompileTask.destinationDir
++            from javaCompileTask.destinationDirectory
+         }
+     }
+ 
+-    artifacts {
+-        archives androidSourcesJar
+-        archives androidJavadocJar
+-    }
+-
+-    task installArchives(type: Upload) {
+-        configuration = configurations.archives
+-        repositories.mavenDeployer {
+-            // Deploy to react-native-event-bridge/maven, ready to publish to npm
+-            repository url: "file://${projectDir}/../android/maven"
+-            configureReactNativePom pom
+-        }
+-    }
++    publishing {
++      publications {
++        maven(MavenPublication) {
++          artifact androidSourcesJar
++         }
++       }
++     }
+ }

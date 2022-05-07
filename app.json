@@ -16,10 +16,6 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "ios": {
-      "supportsTablet": true,
-      "requireFullScreen": true
-    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -29,9 +25,6 @@
     },
     "androidNavigationBar": {
       "visible": "immersive"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
     }
   }
 }
