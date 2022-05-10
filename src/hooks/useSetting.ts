@@ -1,5 +1,5 @@
-import { useAsyncStorage } from "@react-native-async-storage/async-storage";
+import useAsyncStorage from "./useAsyncStorage";
 
-export default function useSetting(key: string) {
-  return useAsyncStorage(`settings/${key}`);
+export default function useSetting(key: string, defaultValue?: string) {
+  return useAsyncStorage(`settings/${key}`, defaultValue);
 }

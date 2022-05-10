@@ -18,8 +18,20 @@ export default function Main({ route, navigation }: MainProps) {
 
   useEffect(() => {
     if (code.length < codeLength) return;
-    setCode([]);
-    navigation.navigate("play", { code: code });
+
+    let cancelled = false;
+
+    const transition = async (code: Code) => {
+      if (!cancelled) {
+        setCode([]);
+        navigation.navigate("play", { code: code });
+      }
+    };
+    transition(code).catch((error) => console.log(error));
+
+    return () => {
+      cancelled = true;
+    };
   }, [code]);
 
   return (

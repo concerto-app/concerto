@@ -11,7 +11,8 @@ import Emoji from "../components/emojis/Emoji";
 import Indicator from "../components/Indicator";
 import Slider from "../components/Slider";
 import Picker from "../components/Picker";
-import useSetting from "../hooks/useSetting";
+import { availableInstruments, baseMidiInputs } from "../constants";
+import { useSettings } from "../contexts/settings";
 
 const margins = {
   vertical: 16,
@@ -84,67 +85,39 @@ function Subsection({
 export default function Settings({ route, navigation }: SettingsProps) {
   const { code, users } = route.params;
 
-  const availableMidiInputs = [{ label: "None", value: "none" }];
-  const defaultMidiInput = "none";
+  const availableMidiInputs = [...baseMidiInputs, ...[]];
 
-  const [initialNoteOnVelocity, setInitialNoteOnVelocity] = React.useState<
-    number | null
-  >(null);
-  const [initialNoteOffVelocity, setInitialNoteOffVelocity] = React.useState<
-    number | null
-  >(null);
-  const [initialMidiInput, setInitialMidiInput] = React.useState<string | null>(
-    null
-  );
-
-  const noteOnVelocitySetting = useSetting("noteOnVelocity");
-  const noteOffVelocitySetting = useSetting("noteOffVelocity");
-  const midiInputSetting = useSetting("midiInput");
-
-  React.useEffect(() => {
-    noteOnVelocitySetting
-      .getItem()
-      .then((value) => setInitialNoteOnVelocity(Number(value || "0")));
-  }, [noteOnVelocitySetting]);
-
-  React.useEffect(() => {
-    noteOffVelocitySetting
-      .getItem()
-      .then((value) => setInitialNoteOffVelocity(Number(value || "0")));
-  }, [noteOffVelocitySetting]);
-
-  React.useEffect(() => {
-    midiInputSetting.getItem().then((value) => {
-      const isInAvailable =
-        availableMidiInputs.filter((input) => input.value === value).length > 0;
-      if (!isInAvailable || value === null)
-        return setInitialMidiInput(defaultMidiInput);
-      setInitialMidiInput(value);
-    });
-  }, [midiInputSetting, availableMidiInputs, defaultMidiInput]);
+  const settings = useSettings();
 
   const handleCloseButtonPress = useCallback(
     () => navigation.goBack(),
     [navigation]
   );
 
-  const handleNoteOnSliderChange = useCallback(
+  const handleNoteOnSliderComplete = React.useCallback(
     async (value: number | number[]) =>
-      await noteOnVelocitySetting.setItem(
+      await settings.noteOnVelocity.setValue(
         (Array.isArray(value) ? value[0] : value).toString()
       ),
-    [noteOnVelocitySetting]
+    [settings.noteOnVelocity.setValue]
   );
-  const handleNoteOffSliderChange = useCallback(
+
+  const handleNoteOffSliderComplete = React.useCallback(
     async (value: number | number[]) =>
-      await noteOffVelocitySetting.setItem(
+      await settings.noteOffVelocity.setValue(
         (Array.isArray(value) ? value[0] : value).toString()
       ),
-    [noteOnVelocitySetting]
+    [settings.noteOffVelocity.setValue]
   );
-  const handleMidiInputPickerChange = useCallback(
-    async (value: string) => await midiInputSetting.setItem(value),
-    [midiInputSetting]
+
+  const handleInstrumentPickerChange = React.useCallback(
+    async (value: string) => await settings.instrument.setValue(value),
+    [settings.instrument.setValue]
+  );
+
+  const handleMidiInputPickerChange = React.useCallback(
+    async (value: string) => await settings.midiInput.setValue(value),
+    [settings.midiInput.setValue]
   );
 
   return (
@@ -211,33 +184,41 @@ export default function Settings({ route, navigation }: SettingsProps) {
             </Subsection>
           </Section>
           <Section title="Settings">
-            {initialNoteOnVelocity && (
+            {settings.noteOnVelocity.value === undefined ? null : (
               <Subsection title="Note On Velocity">
                 <Slider
-                  value={initialNoteOnVelocity}
-                  step={1}
-                  minimumValue={0}
-                  maximumValue={100}
-                  onValueChange={handleNoteOnSliderChange}
+                  value={Number(settings.noteOnVelocity.value)}
+                  minimumValue={0.0}
+                  maximumValue={1.0}
+                  onSlidingComplete={handleNoteOnSliderComplete}
                 />
               </Subsection>
             )}
-            {initialNoteOffVelocity && (
+            {settings.noteOffVelocity.value === undefined ? null : (
               <Subsection title="Note Off Velocity">
                 <Slider
-                  value={initialNoteOffVelocity}
-                  step={1}
-                  minimumValue={0}
-                  maximumValue={100}
-                  onValueChange={handleNoteOffSliderChange}
+                  value={Number(settings.noteOffVelocity.value)}
+                  minimumValue={0.0}
+                  maximumValue={1.0}
+                  onSlidingComplete={handleNoteOffSliderComplete}
                 />
               </Subsection>
             )}
-            {initialMidiInput && (
+            {settings.instrument.value === undefined ? null : (
+              <Subsection title="Instrument">
+                <Picker
+                  placeholder={{}}
+                  value={settings.instrument.value}
+                  items={availableInstruments}
+                  onValueChange={handleInstrumentPickerChange}
+                />
+              </Subsection>
+            )}
+            {settings.midiInput.value === undefined ? null : (
               <Subsection title="MIDI Input">
                 <Picker
                   placeholder={{}}
-                  value={initialMidiInput}
+                  value={settings.midiInput.value}
                   items={availableMidiInputs}
                   onValueChange={handleMidiInputPickerChange}
                 />

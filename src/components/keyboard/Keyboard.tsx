@@ -21,28 +21,30 @@ export type KeyboardProps = ReactNative.ViewProps & {
 };
 
 const octaveWhiteNotes: Array<string> = ["C", "D", "E", "F", "G", "A", "B"];
-const octaveBlackNotes: Array<string> = ["C#", "D#", "F#", "G#", "A#"];
+const octaveBlackNotes: Array<string> = ["Db", "Eb", "Gb", "Ab", "Bb"];
 
-const sharpsIndex: Record<string, number> = {
-  "C#": 1,
-  "D#": 2,
-  "F#": 4,
-  "G#": 5,
-  "A#": 6,
+export const allOctaveNotes = [...octaveWhiteNotes, ...octaveBlackNotes];
+
+const flatsIndex: Record<string, number> = {
+  Db: 1,
+  Eb: 2,
+  Gb: 4,
+  Ab: 5,
+  Bb: 6,
 };
 
 const noteColors: Record<string, string> = {
   C: "#ff0939",
-  "C#": "#ff9244",
+  Db: "#ff9244",
   D: "#fffc58",
-  "D#": "#83fe56",
+  Eb: "#83fe56",
   E: "#00ff54",
   F: "#00ffa1",
-  "F#": "#00fffe",
+  Gb: "#00fffe",
   G: "#009ffa",
-  "G#": "#0047f8",
+  Ab: "#0047f8",
   A: "#9a41f8",
-  "A#": "#ff32f9",
+  Bb: "#ff32f9",
   B: "#ff1c97",
 };
 
@@ -94,7 +96,7 @@ const InternalBlackKey = (props: {
     style={{
       position: "absolute",
       start:
-        sharpsIndex[props.note] * (props.whiteKeyWidth + props.spacing) -
+        flatsIndex[props.note] * (props.whiteKeyWidth + props.spacing) -
         0.5 * props.spacing -
         0.5 * (props.keyWidth + 2 * props.spacing),
     }}
@@ -120,16 +122,20 @@ const MemoizedWhiteKey = React.memo(
   InternalWhiteKey,
   (prevProps, nextProps) => {
     const {
-      onKeyPressedIn: f11,
-      onKeyPressedOut: f12,
+      onKeyPressedIn: onKeyPressedInPrev,
+      onKeyPressedOut: onKeyPressedOutPrev,
       ...otherPrevProps
     } = prevProps;
     const {
-      onKeyPressedIn: f21,
-      onKeyPressedOut: f22,
+      onKeyPressedIn: onKeyPressedInNext,
+      onKeyPressedOut: onKeyPressedOutNext,
       ...otherNextProps
     } = nextProps;
-    return JSON.stringify(otherPrevProps) === JSON.stringify(otherNextProps);
+    return (
+      onKeyPressedInPrev == onKeyPressedInNext &&
+      onKeyPressedOutPrev == onKeyPressedOutNext &&
+      JSON.stringify(otherPrevProps) == JSON.stringify(otherNextProps)
+    );
   }
 );
 
@@ -137,16 +143,20 @@ const MemoizedBlackKey = React.memo(
   InternalBlackKey,
   (prevProps, nextProps) => {
     const {
-      onKeyPressedIn: f11,
-      onKeyPressedOut: f12,
+      onKeyPressedIn: onKeyPressedInPrev,
+      onKeyPressedOut: onKeyPressedOutPrev,
       ...otherPrevProps
     } = prevProps;
     const {
-      onKeyPressedIn: f21,
-      onKeyPressedOut: f22,
+      onKeyPressedIn: onKeyPressedInNext,
+      onKeyPressedOut: onKeyPressedOutNext,
       ...otherNextProps
     } = nextProps;
-    return JSON.stringify(otherPrevProps) === JSON.stringify(otherNextProps);
+    return (
+      onKeyPressedInPrev == onKeyPressedInNext &&
+      onKeyPressedOutPrev == onKeyPressedOutNext &&
+      JSON.stringify(otherPrevProps) == JSON.stringify(otherNextProps)
+    );
   }
 );
 
@@ -165,6 +175,10 @@ export default function Keyboard({
   const blackKeyWidth = (keyWidth * 2) / 3;
   const blackKeyHeight = 0.5 * keyHeight;
 
+  const octaveNums = [...Array(octavesNumber).keys()].map(
+    (octave) => octave + 1
+  );
+
   return (
     <ReactNative.View
       style={tw.style("flex-row", {
@@ -173,7 +187,7 @@ export default function Keyboard({
       })}
       {...otherProps}
     >
-      {[...Array(octavesNumber).keys()].map((octave) => (
+      {octaveNums.map((octave) => (
         <ReactNative.View key={octave.toString()}>
           <ReactNative.View
             style={{ flexDirection: "row", paddingVertical: spacing }}
