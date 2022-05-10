@@ -2,17 +2,24 @@ import tw from "../tailwind";
 import ReactNative from "react-native";
 import { PlayProps } from "../navigation/types";
 import React, { useState } from "react";
-import Keyboard from "../components/keyboard/Keyboard";
+import Keyboard, { allOctaveNotes } from "../components/keyboard/Keyboard";
 import { BorderlessButton, ScrollView } from "react-native-gesture-handler";
 import Marker from "../components/Marker";
 import Emoji from "../components/emojis/Emoji";
 import Indicator from "../components/Indicator";
 import { mapMap } from "../utils";
+import { useSettings } from "../contexts/settings";
 
 type KeyboardState = Map<Key, UserId>;
 
+const octaves = 7;
 const buttonSize = 45;
 const buttonMargin = 16;
+
+const octaveNums = [...Array(octaves).keys()].map((octave) => octave + 1);
+const allNotes = allOctaveNotes.flatMap((note) =>
+  octaveNums.map((octave) => note + octave)
+);
 
 function SettingsButton({
   text,
@@ -52,6 +59,8 @@ export default function Play({ route, navigation }: PlayProps) {
   const { code } = route.params;
 
   const [keyboardState, setKeyboardState] = useState<KeyboardState>(new Map());
+
+  const settings = useSettings();
 
   const getUserEmojiCode = (user: UserId) => "1f349";
 
@@ -108,6 +117,7 @@ export default function Play({ route, navigation }: PlayProps) {
             }))}
             onKeyPressedIn={handleUserKeyPressedIn}
             onKeyPressedOut={handleUserKeyPressedOut}
+            octavesNumber={octaves}
           />
         </ReactNative.View>
       </ScrollView>

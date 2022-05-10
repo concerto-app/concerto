@@ -1,7 +1,7 @@
 import React from "react";
 import Svg, { SvgProps } from "../Svg";
-import { useSVG } from "@shopify/react-native-skia";
-import useNetworkAsset from "../../hooks/useNetworkAsset";
+import { downloadNetworkAsset } from "../../utils";
+import useSvg from "../../hooks/useSvg";
 
 export type EmojiProps = Omit<SvgProps, "width" | "height" | "svg"> & {
   id: EmojiId;
@@ -15,14 +15,30 @@ function PrefetchSvg({
   uri,
   ...otherProps
 }: Omit<SvgProps, "svg"> & { uri: string }) {
-  const svg = useSVG(uri);
+  const svg = useSvg(uri);
   return <Svg svg={svg} {...otherProps} />;
 }
 
 export default function Emoji({ id, size, ...otherProps }: EmojiProps) {
-  const url = idToUrl(id);
-  const fileUri = useNetworkAsset(url);
-  return fileUri === null ? (
+  const [fileUri, setFileUri] = React.useState<string>();
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const downloadEmoji = async (id: string) => {
+      const url = idToUrl(id);
+      const uri = await downloadNetworkAsset(url);
+      if (!cancelled) setFileUri(uri);
+    };
+
+    downloadEmoji(id).catch((error) => console.log(error));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  return !fileUri ? (
     <Svg width={size} height={size} svg={null} {...otherProps} />
   ) : (
     <PrefetchSvg width={size} height={size} uri={fileUri} {...otherProps} />
