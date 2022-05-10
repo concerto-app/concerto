@@ -8,6 +8,7 @@ import Marker from "../components/Marker";
 import Emoji from "../components/emojis/Emoji";
 import Indicator from "../components/Indicator";
 import { mapMap } from "../utils";
+import Player, { loadPlayer } from "../sound/Player";
 import { useSettings } from "../contexts/settings";
 
 type KeyboardState = Map<Key, UserId>;
@@ -59,6 +60,7 @@ export default function Play({ route, navigation }: PlayProps) {
   const { code } = route.params;
 
   const [keyboardState, setKeyboardState] = useState<KeyboardState>(new Map());
+  const [player, setPlayer] = useState<Player>();
 
   const settings = useSettings();
 
@@ -68,16 +70,28 @@ export default function Play({ route, navigation }: PlayProps) {
 
   const getAllUsers = () => [getCurrentUser()];
 
-  const handleKeyPressedIn = (key: Key, user: UserId) => {
+  const handleKeyPressedIn = (
+    key: Key,
+    user: UserId,
+    player?: Player,
+    velocity?: number
+  ) => {
     setKeyboardState((prevState) => {
       if (prevState.has(key)) return prevState;
+      if (player && velocity) player.start(key, velocity).then();
       return new Map(prevState).set(key, user);
     });
   };
 
-  const handleKeyPressedOut = (key: Key, user: UserId) => {
+  const handleKeyPressedOut = (
+    key: Key,
+    user: UserId,
+    player?: Player,
+    velocity?: number
+  ) => {
     setKeyboardState((prevState) => {
       if (!prevState.has(key) || prevState.get(key) !== user) return prevState;
+      if (player && velocity) player.stop(key, velocity).then();
       const stateCopy = new Map(prevState);
       stateCopy.delete(key);
       return stateCopy;
@@ -86,14 +100,28 @@ export default function Play({ route, navigation }: PlayProps) {
 
   const handleUserKeyPressedIn = React.useCallback(
     (note: string, octave: number) =>
-      handleKeyPressedIn(note + octave, getCurrentUser()),
-    []
+      handleKeyPressedIn(
+        note + octave,
+        getCurrentUser(),
+        player,
+        settings.noteOnVelocity.value === undefined
+          ? undefined
+          : Number(settings.noteOnVelocity.value)
+      ),
+    [player, settings.noteOnVelocity.value]
   );
 
   const handleUserKeyPressedOut = React.useCallback(
     (note: string, octave: number) =>
-      handleKeyPressedOut(note + octave, getCurrentUser()),
-    []
+      handleKeyPressedOut(
+        note + octave,
+        getCurrentUser(),
+        player,
+        settings.noteOffVelocity.value === undefined
+          ? undefined
+          : Number(settings.noteOffVelocity.value)
+      ),
+    [player, settings.noteOffVelocity.value]
   );
 
   const handleSettingsButtonPress = React.useCallback(() => {
@@ -102,6 +130,28 @@ export default function Play({ route, navigation }: PlayProps) {
       users: getAllUsers().map((user) => [user, getUserEmojiCode(user)]),
     });
   }, []);
+
+  React.useEffect(() => {
+    if (!settings.instrument.value) return;
+
+    let cancelled = false;
+
+    const getPlayer = async (instrument: string, notes: string[]) => {
+      player && (await player.destroy());
+      const newPlayer = await loadPlayer(instrument, notes);
+      cancelled ? await newPlayer.destroy() : setPlayer(newPlayer);
+    };
+
+    getPlayer(settings.instrument.value, allNotes).catch((error) =>
+      console.log(error)
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [settings.instrument.value, allNotes]);
+
+  if (!player) return null;
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>
