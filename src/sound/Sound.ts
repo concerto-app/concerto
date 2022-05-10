@@ -24,15 +24,6 @@ export default class Sound {
     });
   }
 
-  async reload() {
-    try {
-      await this.unload();
-    } catch (error) {
-      console.log(error());
-    }
-    await this.load();
-  }
-
   async getVolume() {
     if (!this.player?.isLoaded()) await this.load();
     return this.player?.getVolume();
@@ -41,21 +32,23 @@ export default class Sound {
   async setVolume(volume: number) {
     if (!this.player?.isLoaded()) await this.load();
     this.player?.setVolume(volume);
-    if (this.player && this.player.getVolume() !== volume) await this.reload();
   }
 
-  async play() {
+  async play(callback = () => {}) {
     if (!this.player?.isLoaded()) await this.load();
-    if (this.player?.isPlaying()) await this.stop();
-    this.player?.play(async (success) => {
-      if (!success) await this.reload();
+    this.player?.play(async () => {
+      await this.unload();
+      callback();
     });
   }
 
   async stop() {
-    if (!this.player?.isLoaded()) await this.load();
+    if (!this.player?.isLoaded()) return;
     await new Promise((resolve) =>
-      this.player?.stop(() => resolve(this.player))
+      this.player?.stop(async () => {
+        resolve(this.player);
+      })
     );
+    await this.unload();
   }
 }

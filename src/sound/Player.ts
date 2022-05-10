@@ -3,23 +3,20 @@ import * as FileSystem from "expo-file-system";
 import Sound from "./Sound";
 
 export default class Player {
-  private readonly sounds: Map<string, Sound>;
-  private decayTimers: Map<string, NodeJS.Timeout> = new Map<
-    string,
-    NodeJS.Timeout
-  >();
-  private unloadTimers: Map<string, NodeJS.Timeout> = new Map<
-    string,
-    NodeJS.Timeout
-  >();
+  private readonly noteFiles: Map<string, string>;
+  private playingSounds: Map<string, Sound> = new Map<string, Sound>();
+  private timeouts: NodeJS.Timeout[] = [];
 
-  constructor(sounds: Map<string, Sound>) {
-    this.sounds = sounds;
+  constructor(noteFiles: Map<string, string>) {
+    this.noteFiles = noteFiles;
+  }
+
+  _timeout(callback: () => {}, interval: number = 0) {
+    this.timeouts = [...this.timeouts, setTimeout(callback, interval)];
   }
 
   async _decaySound(
     sound: Sound,
-    note: string,
     duration: number,
     interval: number = 10,
     gainDecrement?: number
@@ -37,84 +34,79 @@ export default class Player {
     gainDecrement = gainDecrement || volume / (duration / interval);
     await sound.setVolume(volume - gainDecrement);
 
-    this.decayTimers.set(
-      note,
-      setTimeout(
-        async () =>
-          await this._decaySound(
-            sound,
-            note,
-            duration - interval,
-            interval,
-            gainDecrement
-          ),
-        interval
-      )
+    this._timeout(
+      async () =>
+        await this._decaySound(
+          sound,
+          duration - interval,
+          interval,
+          gainDecrement
+        ),
+      interval
     );
   }
 
   async _playSound(note: string, velocity: number) {
-    const sound = this.sounds.get(note);
-    if (!sound) return;
+    const file = this.noteFiles.get(note);
+    if (!file) return;
 
-    const decayTimer = this.decayTimers.get(note);
-    if (decayTimer !== undefined) {
-      clearTimeout(decayTimer);
-      this.decayTimers.delete(note);
-    }
+    const previousSound = this.playingSounds.get(note);
 
-    const unloadTimer = this.unloadTimers.get(note);
-    if (unloadTimer !== undefined) {
-      clearTimeout(unloadTimer);
-      this.unloadTimers.delete(note);
-    }
+    const sound = new Sound(file);
+
+    this.playingSounds.set(note, sound);
 
     await sound.setVolume(velocity);
-    await sound.play();
+    await sound.play(() => {
+      if (this.playingSounds.get(note) === sound)
+        this.playingSounds.delete(note);
+    });
+
+    if (previousSound)
+      this._timeout(async () => await this._decaySound(previousSound, 100));
   }
 
   async _stopSound(note: string, velocity: number) {
-    const sound = this.sounds.get(note);
+    const file = this.noteFiles.get(note);
+    if (!file) return;
+
+    const sound = this.playingSounds.get(note);
     if (!sound) return;
 
-    await this._decaySound(sound, note, 100 + (1 - velocity) * 400);
+    this.playingSounds.delete(note);
 
-    this.unloadTimers.set(
-      note,
-      setTimeout(async () => await sound.unload(), 2000)
+    this._timeout(
+      async () => await this._decaySound(sound, 100 + (1 - velocity) * 400)
     );
   }
 
   async destroy() {
-    await Promise.all([...this.sounds.values()].map((sound) => sound.unload()));
+    this.timeouts.forEach((timeout) => clearTimeout(timeout));
+    this.timeouts = [];
+    await Promise.all(
+      [...this.playingSounds.values()].map((sound) => sound.unload())
+    );
+    this.playingSounds = new Map<string, Sound>();
   }
 
-  async start(note: string, velocity: number = 1, when: number = 0) {
-    if (!this.sounds.has(note)) {
+  async start(note: string, velocity: number = 1) {
+    if (!this.noteFiles.has(note)) {
       if (__DEV__)
         console.warn("Failed to start. Note is not mapped to sound: " + note);
       return;
     }
 
-    when > 0
-      ? setTimeout(async () => await this._playSound(note, velocity), when)
-      : await this._playSound(note, velocity);
-
-    return this;
+    await this._playSound(note, velocity);
   }
 
-  async stop(note: string, velocity: number = 1, when: number = 0) {
-    if (!this.sounds.has(note)) {
+  async stop(note: string, velocity: number = 1) {
+    if (!this.noteFiles.has(note)) {
       if (__DEV__)
         console.warn("Failed to stop. Note is not mapped to sound: " + note);
       return;
     }
 
-    when > 0
-      ? setTimeout(async () => await this._stopSound(note, velocity), when)
-      : await this._stopSound(note, velocity);
-
-    return this;
+    await this._stopSound(note, velocity);
   }
 }
 
@@ -139,10 +131,5 @@ async function downloadNotes(instrument: string, notes: string[]) {
 
 export async function loadPlayer(instrument: string, notes: string[]) {
   const noteFiles = await downloadNotes(instrument, notes);
-
-  const sounds = new Map(
-    noteFiles.map(({ note, uri }) => [note, new Sound(uri)])
-  );
-
-  return new Player(sounds);
+  return new Player(new Map(noteFiles.map(({ note, uri }) => [note, uri])));
 }
