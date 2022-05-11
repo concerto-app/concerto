@@ -17,17 +17,12 @@ export default function Marker({
     <ReactNative.View
       style={[
         style,
-        tw.style(
-          "items-center",
-          "justify-center",
-          "rounded-full",
-          "bg-white",
-          "shadow-xl",
-          {
-            width: size,
-            height: size,
-          }
-        ),
+        tw.style("rounded-full", "bg-white", "shadow-xl", {
+          alignItems: "center",
+          justifyContent: "center",
+          width: size,
+          height: size,
+        }),
       ]}
       {...otherProps}
     >

@@ -39,7 +39,7 @@ export default function Emoji({ id, size, ...otherProps }: EmojiProps) {
   }, [id]);
 
   return !fileUri ? (
-    <Svg width={size} height={size} svg={null} {...otherProps} />
+    <Svg width={size} height={size} {...otherProps} />
   ) : (
     <PrefetchSvg width={size} height={size} uri={fileUri} {...otherProps} />
   );

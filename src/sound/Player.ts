@@ -4,15 +4,19 @@ import Sound from "./Sound";
 
 export default class Player {
   private readonly noteFiles: Map<string, string>;
-  private playingSounds: Map<string, Sound> = new Map<string, Sound>();
-  private timeouts: NodeJS.Timeout[] = [];
+  private readonly playingSounds: Map<string, Sound> = new Map<string, Sound>();
+  private readonly timeouts: Set<NodeJS.Timeout> = new Set<NodeJS.Timeout>();
 
   constructor(noteFiles: Map<string, string>) {
     this.noteFiles = noteFiles;
   }
 
   _timeout(callback: () => {}, interval: number = 0) {
-    this.timeouts = [...this.timeouts, setTimeout(callback, interval)];
+    const timeout = setTimeout(() => {
+      this.timeouts.delete(timeout);
+      callback();
+    }, interval);
+    this.timeouts.add(timeout);
   }
 
   async _decaySound(
@@ -82,11 +86,11 @@ export default class Player {
 
   async destroy() {
     this.timeouts.forEach((timeout) => clearTimeout(timeout));
-    this.timeouts = [];
+    this.timeouts.clear();
     await Promise.all(
       [...this.playingSounds.values()].map((sound) => sound.unload())
     );
-    this.playingSounds = new Map<string, Sound>();
+    this.playingSounds.clear();
   }
 
   async start(note: string, velocity: number = 1) {

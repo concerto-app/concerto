@@ -10,13 +10,12 @@ import {
 } from "@shopify/react-native-skia";
 import React from "react";
 import ReactNative from "react-native";
-import tw from "../tailwind";
 
 export type SvgProps = Omit<RectCtor, "x" | "y"> &
   React.PropsWithChildren<{
     x?: number;
     y?: number;
-    svg?: SkSVG | null;
+    svg?: SkSVG;
     canvasScale?: number;
   }>;
 
@@ -51,12 +50,13 @@ export default function Svg({
   return (
     <ReactNative.View style={{ width: width, height: height }}>
       <Canvas
-        style={tw.style("absolute", {
+        style={{
+          position: "absolute",
           left: -offsetX,
           top: -offsetY,
           width: canvasWidth,
           height: canvasHeight,
-        })}
+        }}
       >
         <Paint ref={paint}>
           {children}

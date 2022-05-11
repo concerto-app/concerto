@@ -2,7 +2,7 @@ import tw from "../tailwind";
 import ReactNative from "react-native";
 import { PlayProps } from "../navigation/types";
 import React, { useState } from "react";
-import Keyboard, { allOctaveNotes } from "../components/keyboard/Keyboard";
+import Keyboard from "../components/keyboard/Keyboard";
 import { BorderlessButton, ScrollView } from "react-native-gesture-handler";
 import Marker from "../components/Marker";
 import Emoji from "../components/emojis/Emoji";
@@ -10,6 +10,9 @@ import Indicator from "../components/Indicator";
 import { mapMap } from "../utils";
 import Player, { loadPlayer } from "../sound/Player";
 import { useSettings } from "../contexts/settings";
+import { allOctaveNotes } from "../components/keyboard/constants";
+import KeyboardHintOverlay from "../components/keyboard/KeyboardHintOverlay";
+import { debounce } from "lodash";
 
 type KeyboardState = Map<Key, UserId>;
 
@@ -59,12 +62,13 @@ function SettingsButton({
 export default function Play({ route, navigation }: PlayProps) {
   const { code } = route.params;
 
+  const [scrolling, setScrolling] = useState<boolean>(false);
   const [keyboardState, setKeyboardState] = useState<KeyboardState>(new Map());
   const [player, setPlayer] = useState<Player>();
 
   const settings = useSettings();
 
-  const getUserEmojiCode = (user: UserId) => "1f349";
+  const getUserEmoji = (user: UserId) => "1f349";
 
   const getCurrentUser = () => "me";
 
@@ -127,9 +131,17 @@ export default function Play({ route, navigation }: PlayProps) {
   const handleSettingsButtonPress = React.useCallback(() => {
     navigation.navigate("settings", {
       code: code,
-      users: getAllUsers().map((user) => [user, getUserEmojiCode(user)]),
+      users: getAllUsers().map((user) => [user, getUserEmoji(user)]),
     });
   }, []);
+
+  const debouncer = React.useRef(debounce((value) => setScrolling(value), 500));
+
+  const handleScrollStart = React.useCallback(() => {
+    debouncer.current.cancel();
+    setScrolling(true);
+  }, [debouncer]);
+  const handleScrollEnd = React.useCallback(() => debouncer.current(false), []);
 
   React.useEffect(() => {
     if (!settings.instrument.value) return;
@@ -159,16 +171,31 @@ export default function Play({ route, navigation }: PlayProps) {
         horizontal={true}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
+        onScrollBeginDrag={handleScrollStart}
+        onEnded={handleScrollEnd}
       >
-        <ReactNative.View style={tw.style("flex-1", "justify-end")}>
-          <Keyboard
-            pressedKeys={mapMap(keyboardState, (user) => ({
-              emojiCode: getUserEmojiCode(user),
-            }))}
-            onKeyPressedIn={handleUserKeyPressedIn}
-            onKeyPressedOut={handleUserKeyPressedOut}
-            octavesNumber={octaves}
-          />
+        <ReactNative.View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <ReactNative.View>
+            <Keyboard
+              pressedKeys={mapMap(keyboardState, (user) => ({
+                emojiId: getUserEmoji(user),
+              }))}
+              onKeyPressedIn={handleUserKeyPressedIn}
+              onKeyPressedOut={handleUserKeyPressedOut}
+              octavesNumber={octaves}
+            />
+            <ReactNative.View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                height: "100%",
+                width: "100%",
+                display: scrolling ? "flex" : "none",
+              }}
+            >
+              <KeyboardHintOverlay />
+            </ReactNative.View>
+          </ReactNative.View>
         </ReactNative.View>
       </ScrollView>
       <ReactNative.View
@@ -176,7 +203,7 @@ export default function Play({ route, navigation }: PlayProps) {
       >
         <SettingsButton
           text="2"
-          emojiId={getUserEmojiCode(getCurrentUser())}
+          emojiId={getUserEmoji(getCurrentUser())}
           size={buttonSize}
           margin={buttonMargin}
           onPress={handleSettingsButtonPress}
