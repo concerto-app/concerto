@@ -1,7 +1,7 @@
 import tw from "../tailwind";
 import ReactNative from "react-native";
 import { PlayProps } from "../navigation/types";
-import React, { useState } from "react";
+import React from "react";
 import Keyboard from "../components/keyboard/Keyboard";
 import { BorderlessButton, ScrollView } from "react-native-gesture-handler";
 import Marker from "../components/Marker";
@@ -13,6 +13,11 @@ import { useSettings } from "../contexts/settings";
 import { allOctaveNotes } from "../components/keyboard/constants";
 import KeyboardHintOverlay from "../components/keyboard/KeyboardHintOverlay";
 import { debounce } from "lodash";
+import useCancellable from "../hooks/useCancellable";
+import useAppSelector from "../hooks/useAppSelector";
+import useAppDispatch from "../hooks/useAppDispatch";
+import Room, { RoomEvent } from "../Room";
+import { addUser, removeUser } from "../state/slices/users";
 
 type KeyboardState = Map<Key, UserId>;
 
@@ -24,6 +29,8 @@ const octaveNums = [...Array(octaves).keys()].map((octave) => octave + 1);
 const allNotes = allOctaveNotes.flatMap((note) =>
   octaveNums.map((octave) => note + octave)
 );
+
+const fallbackEmoji = "1f32d";
 
 function SettingsButton({
   text,
@@ -59,27 +66,24 @@ function SettingsButton({
   );
 }
 
-export default function Play({ route, navigation }: PlayProps) {
-  const { code } = route.params;
-
-  const [scrolling, setScrolling] = useState<boolean>(false);
-  const [keyboardState, setKeyboardState] = useState<KeyboardState>(new Map());
-  const [player, setPlayer] = useState<Player>();
+export default function Play({ navigation }: PlayProps) {
+  const [scrolling, setScrolling] = React.useState<boolean>(false);
+  const [player, setPlayer] = React.useState<Player>();
+  const [room, setRoom] = React.useState<Room>();
+  const [keyboardState, setKeyboardState] = React.useState<KeyboardState>(
+    new Map()
+  );
 
   const settings = useSettings();
 
-  const getUserEmoji = (user: UserId) => "1f349";
+  const dispatch = useAppDispatch();
+  const code = useAppSelector((state) => state.code.code);
+  const users = useAppSelector((state) => state.users.users);
 
-  const getCurrentUser = () => "me";
+  const getUserEmoji = (userId: UserId) =>
+    users.find((user) => user.id === userId)?.emoji;
 
-  const getAllUsers = () => [getCurrentUser()];
-
-  const handleKeyPressedIn = (
-    key: Key,
-    user: UserId,
-    player?: Player,
-    velocity?: number
-  ) => {
+  const handleKeyPressedIn = (key: Key, user: UserId, velocity?: number) => {
     setKeyboardState((prevState) => {
       if (prevState.has(key)) return prevState;
       if (player && velocity) player.start(key, velocity).then();
@@ -87,12 +91,7 @@ export default function Play({ route, navigation }: PlayProps) {
     });
   };
 
-  const handleKeyPressedOut = (
-    key: Key,
-    user: UserId,
-    player?: Player,
-    velocity?: number
-  ) => {
+  const handleKeyPressedOut = (key: Key, user: UserId, velocity?: number) => {
     setKeyboardState((prevState) => {
       if (!prevState.has(key) || prevState.get(key) !== user) return prevState;
       if (player && velocity) player.stop(key, velocity).then();
@@ -103,67 +102,131 @@ export default function Play({ route, navigation }: PlayProps) {
   };
 
   const handleUserKeyPressedIn = React.useCallback(
-    (note: string, octave: number) =>
-      handleKeyPressedIn(
-        note + octave,
-        getCurrentUser(),
-        player,
-        settings.noteOnVelocity.value === undefined
-          ? undefined
-          : Number(settings.noteOnVelocity.value)
-      ),
-    [player, settings.noteOnVelocity.value]
+    (note: string, octave: number) => {
+      if (!room || !player || settings.noteOnVelocity.value === undefined)
+        return;
+      room.dispatch({
+        key: note + octave,
+        type: "press",
+        velocity: Number(settings.noteOffVelocity.value),
+      });
+    },
+    [room, settings.noteOnVelocity.value]
   );
 
   const handleUserKeyPressedOut = React.useCallback(
-    (note: string, octave: number) =>
-      handleKeyPressedOut(
-        note + octave,
-        getCurrentUser(),
-        player,
-        settings.noteOffVelocity.value === undefined
-          ? undefined
-          : Number(settings.noteOffVelocity.value)
-      ),
-    [player, settings.noteOffVelocity.value]
+    (note: string, octave: number) => {
+      if (!room || !player || settings.noteOffVelocity.value === undefined)
+        return;
+      room.dispatch({
+        key: note + octave,
+        type: "release",
+        velocity: Number(settings.noteOffVelocity.value),
+      });
+    },
+    [room, settings.noteOffVelocity.value]
   );
 
   const handleSettingsButtonPress = React.useCallback(() => {
-    navigation.navigate("settings", {
-      code: code,
-      users: getAllUsers().map((user) => [user, getUserEmoji(user)]),
-    });
-  }, []);
+    navigation.navigate("settings", {});
+  }, [navigation]);
 
-  const debouncer = React.useRef(debounce((value) => setScrolling(value), 500));
+  const debouncer = React.useRef(
+    debounce((value) => setScrolling(value), 500)
+  ).current;
 
   const handleScrollStart = React.useCallback(() => {
-    debouncer.current.cancel();
+    debouncer.cancel();
     setScrolling(true);
   }, [debouncer]);
-  const handleScrollEnd = React.useCallback(() => debouncer.current(false), []);
+  const handleScrollEnd = React.useCallback(() => debouncer(false), []);
 
-  React.useEffect(() => {
-    if (!settings.instrument.value) return;
+  const handleRoomConnected = React.useCallback(
+    (id: UserId, emoji: EmojiId) => {
+      dispatch(
+        addUser({
+          id: id,
+          emoji: emoji,
+        })
+      );
+    },
+    [dispatch]
+  );
 
-    let cancelled = false;
+  const handleUserConnected = React.useCallback(
+    (id: UserId, emoji: EmojiId) => {
+      dispatch(
+        addUser({
+          id: id,
+          emoji: emoji,
+        })
+      );
+    },
+    [dispatch]
+  );
 
-    const getPlayer = async (instrument: string, notes: string[]) => {
+  const handleUserDisconnected = React.useCallback(
+    (id: UserId) => dispatch(removeUser(id)),
+    [dispatch]
+  );
+
+  const handleRoomEvent = React.useCallback(
+    (event: RoomEvent) => {
+      if (!player) return;
+      switch (event.action.type) {
+        case "press":
+          return handleKeyPressedIn(
+            event.action.key,
+            event.user,
+            event.action.velocity
+          );
+        case "release":
+          return handleKeyPressedOut(
+            event.action.key,
+            event.user,
+            event.action.velocity
+          );
+      }
+    },
+    [player]
+  );
+
+  useCancellable(
+    (cancelInfo) => {
+      if (!code) return;
+      const room = new Room(
+        code,
+        handleRoomConnected,
+        handleUserConnected,
+        handleUserDisconnected,
+        handleRoomEvent
+      );
+      cancelInfo.cancelled ? room.disconnect() : setRoom(room);
+    },
+    [
+      code,
+      handleRoomConnected,
+      handleUserConnected,
+      handleUserDisconnected,
+      handleRoomEvent,
+    ]
+  );
+
+  useCancellable(
+    async (cancelInfo) => {
+      if (!settings.instrument.value) return;
       player && (await player.destroy());
-      const newPlayer = await loadPlayer(instrument, notes);
-      cancelled ? await newPlayer.destroy() : setPlayer(newPlayer);
-    };
+      const newPlayer = await loadPlayer(settings.instrument.value, allNotes);
+      cancelInfo.cancelled ? await newPlayer.destroy() : setPlayer(newPlayer);
+    },
+    [settings.instrument.value, allNotes]
+  );
 
-    getPlayer(settings.instrument.value, allNotes).catch((error) =>
-      console.log(error)
-    );
+  if (!player || !room) return null;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [settings.instrument.value, allNotes]);
+  const currentUserEmoji = getUserEmoji(room.currentUser);
 
-  if (!player) return null;
+  if (!currentUserEmoji) return null;
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>
@@ -178,7 +241,7 @@ export default function Play({ route, navigation }: PlayProps) {
           <ReactNative.View>
             <Keyboard
               pressedKeys={mapMap(keyboardState, (user) => ({
-                emojiId: getUserEmoji(user),
+                emojiId: getUserEmoji(user) || fallbackEmoji,
               }))}
               onKeyPressedIn={handleUserKeyPressedIn}
               onKeyPressedOut={handleUserKeyPressedOut}
@@ -203,7 +266,7 @@ export default function Play({ route, navigation }: PlayProps) {
       >
         <SettingsButton
           text="2"
-          emojiId={getUserEmoji(getCurrentUser())}
+          emojiId={currentUserEmoji}
           size={buttonSize}
           margin={buttonMargin}
           onPress={handleSettingsButtonPress}

@@ -11,14 +11,8 @@ export type MainParams = {
   codeLength?: number;
 };
 
-export type PlayParams = {
-  code: Code;
-};
-
-export type SettingsParams = {
-  code: Code;
-  users: Array<[UserId, EmojiId]>;
-};
+export type PlayParams = {};
+export type SettingsParams = {};
 
 export type MainProps = NativeStackScreenProps<RootStackParamList, "main">;
 export type PlayProps = NativeStackScreenProps<RootStackParamList, "play">;

@@ -3,36 +3,45 @@ import ReactNative from "react-native";
 import Heading from "../components/text/Heading";
 import RegularText from "../components/text/RegularText";
 import EmojiCode from "../components/emojis/EmojiCode";
-import { useEffect, useState } from "react";
+import React from "react";
 import EmojiGrid from "../components/emojis/EmojiGrid";
 import { MainProps } from "../navigation/types";
+import useAppDispatch from "../hooks/useAppDispatch";
+import { resetCode, setCode } from "../state/slices/code";
+import useCancellable from "../hooks/useCancellable";
+import { resetUsers } from "../state/slices/users";
 
 export default function Main({ route, navigation }: MainProps) {
   const { availableEmojiCodes, codeLength = 3 } = route.params;
 
-  const [code, setCode] = useState<Code>([]);
+  const [localCode, setLocalCode] = React.useState<Code>([]);
+
+  const dispatch = useAppDispatch();
 
   const onEmojiSelected: (emojiId: EmojiId) => void = (emojiId: EmojiId) => {
-    if (code.length < codeLength) setCode([...code, emojiId]);
+    if (localCode.length < codeLength) setLocalCode([...localCode, emojiId]);
   };
 
-  useEffect(() => {
-    if (code.length < codeLength) return;
+  React.useEffect(
+    () =>
+      navigation.addListener("focus", () => {
+        setLocalCode([]);
+        dispatch(resetCode());
+        dispatch(resetUsers());
+      }),
+    [navigation]
+  );
 
-    let cancelled = false;
-
-    const transition = async (code: Code) => {
-      if (!cancelled) {
-        setCode([]);
-        navigation.navigate("play", { code: code });
+  useCancellable(
+    (cancelInfo) => {
+      if (localCode.length < codeLength) return;
+      if (!cancelInfo.cancelled) {
+        dispatch(setCode(localCode));
+        navigation.navigate("play", {});
       }
-    };
-    transition(code).catch((error) => console.log(error));
-
-    return () => {
-      cancelled = true;
-    };
-  }, [code]);
+    },
+    [localCode]
+  );
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>
@@ -45,7 +54,7 @@ export default function Main({ route, navigation }: MainProps) {
       <ReactNative.View
         style={tw.style("flex-1", "items-center", "justify-center")}
       >
-        <EmojiCode code={code} length={codeLength} />
+        <EmojiCode code={localCode} length={codeLength} />
       </ReactNative.View>
       <ReactNative.View
         style={tw.style("flex-1", "items-center", "justify-center")}

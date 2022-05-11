@@ -13,6 +13,7 @@ import Slider from "../components/Slider";
 import Picker from "../components/Picker";
 import { availableInstruments, baseMidiInputs } from "../constants";
 import { useSettings } from "../contexts/settings";
+import useAppSelector from "../hooks/useAppSelector";
 
 const margins = {
   vertical: 16,
@@ -82,12 +83,13 @@ function Subsection({
   );
 }
 
-export default function Settings({ route, navigation }: SettingsProps) {
-  const { code, users } = route.params;
-
+export default function Settings({ navigation }: SettingsProps) {
   const availableMidiInputs = [...baseMidiInputs, ...[]];
 
   const settings = useSettings();
+
+  const code = useAppSelector((state) => state.code.code);
+  const users = useAppSelector((state) => state.users.users);
 
   const handleCloseButtonPress = useCallback(
     () => navigation.goBack(),
@@ -119,6 +121,8 @@ export default function Settings({ route, navigation }: SettingsProps) {
     async (value: string) => await settings.midiInput.setValue(value),
     [settings.midiInput.setValue]
   );
+
+  if (!code) return null;
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>
@@ -169,13 +173,16 @@ export default function Settings({ route, navigation }: SettingsProps) {
                   contentContainerStyle={{ padding: sizes.userMarker * 3 }}
                 >
                   <ReactNative.View style={{ flexDirection: "row" }}>
-                    {users.map(([user, emoji]) => (
+                    {users.map((user) => (
                       <Marker
-                        key={user}
+                        key={user.id}
                         size={sizes.userMarker}
                         style={{ marginRight: margins.userMarker }}
                       >
-                        <Emoji id={emoji} size={(sizes.userMarker * 3) / 5} />
+                        <Emoji
+                          id={user.emoji}
+                          size={(sizes.userMarker * 3) / 5}
+                        />
                       </Marker>
                     ))}
                   </ReactNative.View>
