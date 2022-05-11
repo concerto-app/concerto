@@ -2,6 +2,7 @@ import React from "react";
 import Svg, { SvgProps } from "../Svg";
 import { downloadNetworkAsset } from "../../utils";
 import useSvg from "../../hooks/useSvg";
+import useCancellable from "../../hooks/useCancellable";
 
 export type EmojiProps = Omit<SvgProps, "width" | "height" | "svg"> & {
   id: EmojiId;
@@ -22,21 +23,14 @@ function PrefetchSvg({
 export default function Emoji({ id, size, ...otherProps }: EmojiProps) {
   const [fileUri, setFileUri] = React.useState<string>();
 
-  React.useEffect(() => {
-    let cancelled = false;
-
-    const downloadEmoji = async (id: string) => {
+  useCancellable(
+    async (cancelInfo) => {
       const url = idToUrl(id);
       const uri = await downloadNetworkAsset(url);
-      if (!cancelled) setFileUri(uri);
-    };
-
-    downloadEmoji(id).catch((error) => console.log(error));
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
+      if (!cancelInfo.cancelled) setFileUri(uri);
+    },
+    [id]
+  );
 
   return !fileUri ? (
     <Svg width={size} height={size} {...otherProps} />

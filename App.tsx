@@ -15,6 +15,8 @@ import { gestureHandlerRootHOC } from "react-native-gesture-handler";
 import * as SplashScreen from "expo-splash-screen";
 import React from "react";
 import { SettingsProvider } from "./src/contexts/settings";
+import { Provider } from "react-redux";
+import { store } from "./src/state/store";
 
 const fonts = {
   Nunito_700Bold,
@@ -62,33 +64,35 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <SettingsProvider>
-      <NavigationContainer onReady={onLayoutReady}>
-        <Stack.Navigator
-          initialRouteName="main"
-          screenOptions={{
-            headerShown: false,
-            statusBarHidden: true,
-          }}
-        >
-          <Stack.Screen
-            name="main"
-            component={gestureHandlerRootHOC(Main)}
-            initialParams={{ availableEmojiCodes: availableEmojiCodes }}
-            options={{ orientation: "default" }}
-          />
-          <Stack.Screen
-            name="play"
-            component={gestureHandlerRootHOC(Play)}
-            options={{ orientation: "landscape" }}
-          />
-          <Stack.Screen
-            name="settings"
-            component={gestureHandlerRootHOC(Settings)}
-            options={{ orientation: "default" }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SettingsProvider>
+    <Provider store={store}>
+      <SettingsProvider>
+        <NavigationContainer onReady={onLayoutReady}>
+          <Stack.Navigator
+            initialRouteName="main"
+            screenOptions={{
+              headerShown: false,
+              statusBarHidden: true,
+            }}
+          >
+            <Stack.Screen
+              name="main"
+              component={gestureHandlerRootHOC(Main)}
+              initialParams={{ availableEmojiCodes: availableEmojiCodes }}
+              options={{ orientation: "default" }}
+            />
+            <Stack.Screen
+              name="play"
+              component={gestureHandlerRootHOC(Play)}
+              options={{ orientation: "landscape" }}
+            />
+            <Stack.Screen
+              name="settings"
+              component={gestureHandlerRootHOC(Settings)}
+              options={{ orientation: "default" }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SettingsProvider>
+    </Provider>
   );
 }
