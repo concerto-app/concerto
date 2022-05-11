@@ -19,8 +19,10 @@ export default function Indicator({
     <ReactNative.View
       style={[
         style,
-        tw.style("items-center", "justify-center", "rounded-full"),
+        tw.style("rounded-full"),
         {
+          alignItems: "center",
+          justifyContent: "center",
           width: size,
           height: size,
           backgroundColor: color,

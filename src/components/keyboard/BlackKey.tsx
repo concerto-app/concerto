@@ -1,4 +1,5 @@
 import Key, { KeyProps } from "./Key";
+import { keyColors } from "./constants";
 
 export type BlackKeyProps = Omit<
   KeyProps,
@@ -22,10 +23,10 @@ export default function BlackKey({
     <Key
       width={width}
       height={height}
-      foregroundTopColor="#252525"
-      foregroundBottomColor="#353535"
-      sideColor="#5b5b5b"
-      borderColor="#252525"
+      foregroundTopColor={keyColors.black.foregroundTop}
+      foregroundBottomColor={keyColors.black.foregroundBottom}
+      sideColor={keyColors.black.side}
+      borderColor={keyColors.black.border}
       {...otherProps}
     />
   );

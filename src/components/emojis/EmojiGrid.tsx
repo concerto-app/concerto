@@ -11,7 +11,7 @@ export type EmojiGridProps = ReactNative.ViewProps & {
   emojiMargin?: number;
   emojiSize?: number;
   emojiCanvasScale?: number;
-  onEmojiSelected?: (emojiCode: string) => void;
+  onEmojiSelected?: (emojiId: EmojiId) => void;
 };
 
 export default function EmojiGrid({
@@ -39,11 +39,11 @@ export default function EmojiGrid({
         ]}
         {...props}
       >
-        {emojiIds.map((code, index) => (
+        {emojiIds.map((id, index) => (
           <ReactNative.View key={index}>
-            <BorderlessButton onPress={() => onEmojiSelected(code)}>
+            <BorderlessButton onPress={() => onEmojiSelected(id)}>
               <ReactNative.View style={{ margin: emojiMargin }}>
-                <EmojiSymbol id={code} size={emojiSize} />
+                <EmojiSymbol id={id} size={emojiSize} />
               </ReactNative.View>
             </BorderlessButton>
           </ReactNative.View>

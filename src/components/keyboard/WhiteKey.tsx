@@ -1,4 +1,5 @@
 import Key, { KeyProps } from "./Key";
+import { keyColors } from "./constants";
 
 export type WhiteKeyProps = Omit<
   KeyProps,
@@ -22,10 +23,10 @@ export default function WhiteKey({
     <Key
       width={width}
       height={height}
-      foregroundTopColor="#dcdcdc"
-      foregroundBottomColor="#f7f7f7"
-      sideColor="#ffffff"
-      borderColor="#252525"
+      foregroundTopColor={keyColors.white.foregroundTop}
+      foregroundBottomColor={keyColors.white.foregroundBottom}
+      sideColor={keyColors.white.side}
+      borderColor={keyColors.white.border}
       {...otherProps}
     />
   );

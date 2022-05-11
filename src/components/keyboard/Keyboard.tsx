@@ -2,53 +2,22 @@ import ReactNative from "react-native";
 import WhiteKey from "./WhiteKey";
 import tw from "../../tailwind";
 import BlackKey from "./BlackKey";
-import { TouchableOpacity } from "react-native-gesture-handler";
 import React from "react";
 import Touchable from "../Touchable";
 import { PressedInfo } from "./Key";
+import equal from "fast-deep-equal/react";
+import { KeyboardProps } from "./types";
+import {
+  blackKeyHeightScale,
+  blackKeyWidthScale,
+  defaultKeyboardLayoutProps,
+  flatsIndex,
+  noteColors,
+  octaveBlackNotes,
+  octaveWhiteNotes,
+} from "./constants";
 
-export type PressedKeys = Map<string, PressedInfo>;
-
-export type KeyboardProps = ReactNative.ViewProps & {
-  pressedKeys: PressedKeys;
-  octavesNumber?: number;
-  borderColor?: string;
-  keyWidth?: number;
-  keyHeight?: number;
-  spacing?: number;
-  onKeyPressedIn?: (note: string, octave: number) => void;
-  onKeyPressedOut?: (note: string, octave: number) => void;
-};
-
-const octaveWhiteNotes: Array<string> = ["C", "D", "E", "F", "G", "A", "B"];
-const octaveBlackNotes: Array<string> = ["Db", "Eb", "Gb", "Ab", "Bb"];
-
-export const allOctaveNotes = [...octaveWhiteNotes, ...octaveBlackNotes];
-
-const flatsIndex: Record<string, number> = {
-  Db: 1,
-  Eb: 2,
-  Gb: 4,
-  Ab: 5,
-  Bb: 6,
-};
-
-const noteColors: Record<string, string> = {
-  C: "#ff0939",
-  Db: "#ff9244",
-  D: "#fffc58",
-  Eb: "#83fe56",
-  E: "#00ff54",
-  F: "#00ffa1",
-  Gb: "#00fffe",
-  G: "#009ffa",
-  Ab: "#0047f8",
-  A: "#9a41f8",
-  Bb: "#ff32f9",
-  B: "#ff1c97",
-};
-
-const InternalWhiteKey = (props: {
+type InternalKeyProps = {
   note: string;
   octave: number;
   spacing: number;
@@ -56,18 +25,26 @@ const InternalWhiteKey = (props: {
   onKeyPressedOut: (note: string, octave: number) => void;
   keyWidth: number;
   keyHeight: number;
+  keyDepth: number;
   pressed?: PressedInfo;
-}) => {
+};
+
+type InternalWhiteKeyProps = InternalKeyProps;
+type InternalBlackKeyProps = InternalKeyProps & { whiteKeyWidth: number };
+
+const InternalWhiteKey = (props: InternalWhiteKeyProps) => {
   return (
-    <ReactNative.View style={{ marginRight: props.spacing }}>
-      <TouchableOpacity
+    <ReactNative.View
+      style={{
+        width: props.keyWidth,
+        height: props.keyHeight,
+        marginRight: props.spacing,
+      }}
+    >
+      <Touchable
         activeOpacity={1.0}
         onPressIn={() => props.onKeyPressedIn(props.note, props.octave)}
         onPressOut={() => props.onKeyPressedOut(props.note, props.octave)}
-        extraButtonProps={{
-          rippleColor: "#00000000",
-          exclusive: false,
-        }}
       >
         <WhiteKey
           width={props.keyWidth}
@@ -75,23 +52,14 @@ const InternalWhiteKey = (props: {
           borderWidth={0}
           pressed={props.pressed}
           pressedColor={noteColors[props.note]}
+          depth={props.keyDepth}
         />
-      </TouchableOpacity>
+      </Touchable>
     </ReactNative.View>
   );
 };
 
-const InternalBlackKey = (props: {
-  note: string;
-  octave: number;
-  spacing: number;
-  onKeyPressedIn: (note: string, octave: number) => void;
-  onKeyPressedOut: (note: string, octave: number) => void;
-  keyWidth: number;
-  keyHeight: number;
-  whiteKeyWidth: number;
-  pressed?: PressedInfo;
-}) => (
+const InternalBlackKey = (props: InternalBlackKeyProps) => (
   <ReactNative.View
     style={{
       position: "absolute",
@@ -113,78 +81,76 @@ const InternalBlackKey = (props: {
         pressed={props.pressed}
         pressedColor={noteColors[props.note]}
         style={tw.style("shadow-xl")}
+        depth={props.keyDepth}
       />
     </Touchable>
   </ReactNative.View>
 );
 
-const MemoizedWhiteKey = React.memo(
-  InternalWhiteKey,
-  (prevProps, nextProps) => {
-    const {
-      onKeyPressedIn: onKeyPressedInPrev,
-      onKeyPressedOut: onKeyPressedOutPrev,
-      ...otherPrevProps
-    } = prevProps;
-    const {
-      onKeyPressedIn: onKeyPressedInNext,
-      onKeyPressedOut: onKeyPressedOutNext,
-      ...otherNextProps
-    } = nextProps;
-    return (
-      onKeyPressedInPrev == onKeyPressedInNext &&
-      onKeyPressedOutPrev == onKeyPressedOutNext &&
-      JSON.stringify(otherPrevProps) == JSON.stringify(otherNextProps)
-    );
-  }
-);
-
-const MemoizedBlackKey = React.memo(
-  InternalBlackKey,
-  (prevProps, nextProps) => {
-    const {
-      onKeyPressedIn: onKeyPressedInPrev,
-      onKeyPressedOut: onKeyPressedOutPrev,
-      ...otherPrevProps
-    } = prevProps;
-    const {
-      onKeyPressedIn: onKeyPressedInNext,
-      onKeyPressedOut: onKeyPressedOutNext,
-      ...otherNextProps
-    } = nextProps;
-    return (
-      onKeyPressedInPrev == onKeyPressedInNext &&
-      onKeyPressedOutPrev == onKeyPressedOutNext &&
-      JSON.stringify(otherPrevProps) == JSON.stringify(otherNextProps)
-    );
-  }
-);
+const MemoizedWhiteKey = React.memo(InternalWhiteKey, equal);
+const MemoizedBlackKey = React.memo(InternalBlackKey, equal);
 
 export default function Keyboard({
   pressedKeys,
-  octavesNumber = 7,
+  octavesNumber = defaultKeyboardLayoutProps.octavesNumber,
   borderColor = "#252525",
-  keyWidth = 90,
-  keyHeight = 230,
-  spacing = 5,
+  keyWidth = defaultKeyboardLayoutProps.keyWidth,
+  keyHeight = defaultKeyboardLayoutProps.keyHeight,
+  keyDepth = defaultKeyboardLayoutProps.keyDepth,
+  spacing = defaultKeyboardLayoutProps.spacing,
   style,
   onKeyPressedIn = () => {},
   onKeyPressedOut = () => {},
   ...otherProps
 }: KeyboardProps) {
-  const blackKeyWidth = (keyWidth * 2) / 3;
-  const blackKeyHeight = 0.5 * keyHeight;
+  const blackKeyWidth = keyWidth * blackKeyWidthScale;
+  const blackKeyHeight = keyHeight * blackKeyHeightScale;
 
-  const octaveNums = [...Array(octavesNumber).keys()].map(
-    (octave) => octave + 1
+  const octaveNums = React.useMemo(
+    () => [...Array(octavesNumber).keys()].map((octave) => octave + 1),
+    [octavesNumber]
   );
+
+  const makeWhiteKeys = (octave: number) =>
+    octaveWhiteNotes.map((note) => (
+      <MemoizedWhiteKey
+        key={note + octave}
+        note={note}
+        octave={octave}
+        spacing={spacing}
+        onKeyPressedIn={onKeyPressedIn}
+        onKeyPressedOut={onKeyPressedOut}
+        keyWidth={keyWidth}
+        keyHeight={keyHeight}
+        keyDepth={keyDepth}
+        pressed={pressedKeys.get(note + octave)}
+      />
+    ));
+
+  const makeBlackKeys = (octave: number) =>
+    octaveBlackNotes.map((note) => (
+      <MemoizedBlackKey
+        key={note + octave}
+        note={note}
+        octave={octave}
+        spacing={spacing}
+        onKeyPressedIn={onKeyPressedIn}
+        onKeyPressedOut={onKeyPressedOut}
+        keyWidth={blackKeyWidth}
+        keyHeight={blackKeyHeight}
+        keyDepth={keyDepth}
+        whiteKeyWidth={keyWidth}
+        pressed={pressedKeys.get(note + octave)}
+      />
+    ));
 
   return (
     <ReactNative.View
-      style={tw.style("flex-row", {
+      style={{
+        flexDirection: "row",
         paddingLeft: spacing,
         backgroundColor: borderColor,
-      })}
+      }}
       {...otherProps}
     >
       {octaveNums.map((octave) => (
@@ -192,35 +158,10 @@ export default function Keyboard({
           <ReactNative.View
             style={{ flexDirection: "row", paddingVertical: spacing }}
           >
-            {octaveWhiteNotes.map((note) => (
-              <MemoizedWhiteKey
-                key={note + octave}
-                note={note}
-                octave={octave}
-                spacing={spacing}
-                onKeyPressedIn={onKeyPressedIn}
-                onKeyPressedOut={onKeyPressedOut}
-                keyWidth={keyWidth}
-                keyHeight={keyHeight}
-                pressed={pressedKeys.get(note + octave)}
-              />
-            ))}
+            {makeWhiteKeys(octave)}
           </ReactNative.View>
-          <ReactNative.View style={tw.style("absolute", "flex-row")}>
-            {octaveBlackNotes.map((note) => (
-              <MemoizedBlackKey
-                key={note + octave}
-                note={note}
-                octave={octave}
-                spacing={spacing}
-                onKeyPressedIn={onKeyPressedIn}
-                onKeyPressedOut={onKeyPressedOut}
-                keyWidth={blackKeyWidth}
-                keyHeight={blackKeyHeight}
-                whiteKeyWidth={keyWidth}
-                pressed={pressedKeys.get(note + octave)}
-              />
-            ))}
+          <ReactNative.View style={{ position: "absolute" }}>
+            {makeBlackKeys(octave)}
           </ReactNative.View>
         </ReactNative.View>
       ))}
