@@ -21,6 +21,7 @@ import { getNotesForRange } from "../sound/utils";
 import { useRoom } from "../contexts/room";
 import { useMidi } from "../contexts/midi";
 import { usePlayer } from "../contexts/player";
+import { defaultMidiInput } from "../constants";
 
 type KeyboardState = Map<number, UserId>;
 
@@ -213,14 +214,14 @@ export default function Play({ navigation }: PlayProps) {
       switch (event.action.type) {
         case "press":
           return handleKeyPressedIn(
-            player,
+            player.player,
             event.action.note,
             event.user,
             event.action.velocity
           );
         case "release":
           return handleKeyPressedOut(
-            player,
+            player.player,
             event.action.note,
             event.user,
             event.action.velocity
@@ -254,7 +255,7 @@ export default function Play({ navigation }: PlayProps) {
   useCancellable(() => {
     if (
       settings.midiInput.value === undefined ||
-      settings.midiInput.value === "none"
+      settings.midiInput.value === defaultMidiInput
     )
       return;
     midi.controller.disconnect();
@@ -277,16 +278,16 @@ export default function Play({ navigation }: PlayProps) {
     if (settings.instrument.value === undefined) return;
 
     const load = async (instrument: string, notes: number[]) => {
-      await player.unload();
-      await player.load(instrument, notes);
+      await player.player.unload();
+      await player.player.load(instrument, notes);
     };
 
     load(settings.instrument.value, allNotes).then();
 
     return () => {
-      player.unload().then();
+      player.player.unload().then();
     };
-  }, [player, settings.instrument.value, JSON.stringify(allNotes)]);
+  }, [player.player, settings.instrument.value, JSON.stringify(allNotes)]);
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>

@@ -1,6 +1,6 @@
 import React from "react";
 import useSetting from "../hooks/useSetting";
-import { defaultMidiInput } from "../constants";
+import { defaultInstrument, defaultMidiInput } from "../constants";
 
 type Setting = ReturnType<typeof useSetting>;
 
@@ -17,7 +17,7 @@ export function SettingsProvider(props: { children: React.ReactNode }) {
   const value = {
     noteOnVelocity: useSetting("noteOnVelocity", "1.0"),
     noteOffVelocity: useSetting("noteOffVelocity", "1.0"),
-    instrument: useSetting("instrument", defaultMidiInput),
+    instrument: useSetting("instrument", defaultInstrument),
     midiInput: useSetting("midiInput", defaultMidiInput),
   };
   return <SettingsContext.Provider value={value} children={props.children} />;

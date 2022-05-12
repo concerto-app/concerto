@@ -139,3 +139,14 @@ async function downloadNotes(instrument: string, notes: number[]) {
     uri: fileUris[index],
   }));
 }
+
+function getInstrumentNamesUrl() {
+  return `https://cdn.jsdelivr.net/gh/gleitz/midi-js-soundfonts@gh-pages/FatBoy/names.json`;
+}
+
+export async function getAvailableInstruments() {
+  const url = getInstrumentNamesUrl();
+  const uri = await downloadNetworkAsset(url);
+  const content = await FileSystem.readAsStringAsync(uri);
+  return JSON.parse(content) as string[];
+}

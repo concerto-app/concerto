@@ -11,10 +11,10 @@ import Emoji from "../components/emojis/Emoji";
 import Indicator from "../components/Indicator";
 import Slider from "../components/Slider";
 import Picker from "../components/Picker";
-import { availableInstruments } from "../constants";
 import { useSettings } from "../contexts/settings";
 import useAppSelector from "../hooks/useAppSelector";
 import { useMidi } from "../contexts/midi";
+import { usePlayer } from "../contexts/player";
 
 const margins = {
   vertical: 16,
@@ -86,6 +86,7 @@ function Subsection({
 
 export default function Settings({ navigation }: SettingsProps) {
   const midi = useMidi();
+  const player = usePlayer();
   const settings = useSettings();
 
   const code = useAppSelector((state) => state.code.code);
@@ -216,7 +217,7 @@ export default function Settings({ navigation }: SettingsProps) {
                 <Picker
                   placeholder={{}}
                   value={settings.instrument.value}
-                  items={availableInstruments}
+                  items={player.instruments}
                   onValueChange={handleInstrumentPickerChange}
                 />
               </Subsection>
