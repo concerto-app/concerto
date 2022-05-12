@@ -10,19 +10,18 @@ import { KeyboardProps } from "./types";
 import {
   blackKeyHeightScale,
   blackKeyWidthScale,
+  blacksGapIndex,
   defaultKeyboardLayoutProps,
-  flatsIndex,
-  noteColors,
-  octaveBlackNotes,
-  octaveWhiteNotes,
+  noteNameColors,
 } from "./constants";
+import { getName, toNote } from "../../sound/utils";
+import { blackNoteNames, whiteNoteNames } from "../../sound/constants";
 
 type InternalKeyProps = {
-  note: string;
-  octave: number;
+  note: number;
   spacing: number;
-  onKeyPressedIn: (note: string, octave: number) => void;
-  onKeyPressedOut: (note: string, octave: number) => void;
+  onKeyPressedIn: (note: number) => void;
+  onKeyPressedOut: (note: number) => void;
   keyWidth: number;
   keyHeight: number;
   keyDepth: number;
@@ -43,15 +42,15 @@ const InternalWhiteKey = (props: InternalWhiteKeyProps) => {
     >
       <Touchable
         activeOpacity={1.0}
-        onPressIn={() => props.onKeyPressedIn(props.note, props.octave)}
-        onPressOut={() => props.onKeyPressedOut(props.note, props.octave)}
+        onPressIn={() => props.onKeyPressedIn(props.note)}
+        onPressOut={() => props.onKeyPressedOut(props.note)}
       >
         <WhiteKey
           width={props.keyWidth}
           height={props.keyHeight}
           borderWidth={0}
           pressed={props.pressed}
-          pressedColor={noteColors[props.note]}
+          pressedColor={noteNameColors[getName(props.note)]}
           depth={props.keyDepth}
         />
       </Touchable>
@@ -64,22 +63,23 @@ const InternalBlackKey = (props: InternalBlackKeyProps) => (
     style={{
       position: "absolute",
       start:
-        flatsIndex[props.note] * (props.whiteKeyWidth + props.spacing) -
+        blacksGapIndex[getName(props.note)] *
+          (props.whiteKeyWidth + props.spacing) -
         0.5 * props.spacing -
         0.5 * (props.keyWidth + 2 * props.spacing),
     }}
   >
     <Touchable
       activeOpacity={1.0}
-      onPressIn={() => props.onKeyPressedIn(props.note, props.octave)}
-      onPressOut={() => props.onKeyPressedOut(props.note, props.octave)}
+      onPressIn={() => props.onKeyPressedIn(props.note)}
+      onPressOut={() => props.onKeyPressedOut(props.note)}
     >
       <BlackKey
         width={props.keyWidth}
         height={props.keyHeight}
         borderWidth={props.spacing}
         pressed={props.pressed}
-        pressedColor={noteColors[props.note]}
+        pressedColor={noteNameColors[getName(props.note)]}
         style={tw.style("shadow-xl")}
         depth={props.keyDepth}
       />
@@ -112,37 +112,41 @@ export default function Keyboard({
   );
 
   const makeWhiteKeys = (octave: number) =>
-    octaveWhiteNotes.map((note) => (
-      <MemoizedWhiteKey
-        key={note + octave}
-        note={note}
-        octave={octave}
-        spacing={spacing}
-        onKeyPressedIn={onKeyPressedIn}
-        onKeyPressedOut={onKeyPressedOut}
-        keyWidth={keyWidth}
-        keyHeight={keyHeight}
-        keyDepth={keyDepth}
-        pressed={pressedKeys.get(note + octave)}
-      />
-    ));
+    whiteNoteNames.map((noteName) => {
+      const note = toNote(noteName, octave);
+      return (
+        <MemoizedWhiteKey
+          key={note}
+          note={note}
+          spacing={spacing}
+          onKeyPressedIn={onKeyPressedIn}
+          onKeyPressedOut={onKeyPressedOut}
+          keyWidth={keyWidth}
+          keyHeight={keyHeight}
+          keyDepth={keyDepth}
+          pressed={pressedKeys.get(note)}
+        />
+      );
+    });
 
   const makeBlackKeys = (octave: number) =>
-    octaveBlackNotes.map((note) => (
-      <MemoizedBlackKey
-        key={note + octave}
-        note={note}
-        octave={octave}
-        spacing={spacing}
-        onKeyPressedIn={onKeyPressedIn}
-        onKeyPressedOut={onKeyPressedOut}
-        keyWidth={blackKeyWidth}
-        keyHeight={blackKeyHeight}
-        keyDepth={keyDepth}
-        whiteKeyWidth={keyWidth}
-        pressed={pressedKeys.get(note + octave)}
-      />
-    ));
+    blackNoteNames.map((noteName) => {
+      const note = toNote(noteName, octave);
+      return (
+        <MemoizedBlackKey
+          key={note}
+          note={note}
+          spacing={spacing}
+          onKeyPressedIn={onKeyPressedIn}
+          onKeyPressedOut={onKeyPressedOut}
+          keyWidth={blackKeyWidth}
+          keyHeight={blackKeyHeight}
+          keyDepth={keyDepth}
+          whiteKeyWidth={keyWidth}
+          pressed={pressedKeys.get(note)}
+        />
+      );
+    });
 
   return (
     <ReactNative.View

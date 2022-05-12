@@ -6,17 +6,22 @@ export default function useAsyncStorage(key: string, defaultValue?: string) {
   const [value, setValue] = React.useState<string | undefined>(defaultValue);
 
   useCancellable(
-    async (cancelInfo) => {
-      const value = await AsyncStorage.getItem(key);
-      if (value !== null && !cancelInfo.cancelled) setValue(value);
+    (cancelInfo) => {
+      AsyncStorage.getItem(key).then((value) => {
+        if (value !== null && !cancelInfo.cancelled) setValue(value);
+      });
     },
     [key]
   );
 
   const handleSetValue = React.useCallback(
-    async (newValue: string) => {
-      await AsyncStorage.setItem(key, newValue);
-      setValue(newValue);
+    (value: (previous: string) => string) => {
+      setValue((previous) => {
+        if (previous === undefined) return previous;
+        const newValue = value(previous);
+        AsyncStorage.setItem(key, newValue).then();
+        return newValue;
+      });
     },
     [key]
   );

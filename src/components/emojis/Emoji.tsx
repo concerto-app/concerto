@@ -24,10 +24,10 @@ export default function Emoji({ id, size, ...otherProps }: EmojiProps) {
   const [fileUri, setFileUri] = React.useState<string>();
 
   useCancellable(
-    async (cancelInfo) => {
-      const url = idToUrl(id);
-      const uri = await downloadNetworkAsset(url);
-      if (!cancelInfo.cancelled) setFileUri(uri);
+    (cancelInfo) => {
+      downloadNetworkAsset(idToUrl(id)).then((uri) => {
+        if (!cancelInfo.cancelled) setFileUri(uri);
+      });
     },
     [id]
   );

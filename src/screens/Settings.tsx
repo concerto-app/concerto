@@ -11,9 +11,10 @@ import Emoji from "../components/emojis/Emoji";
 import Indicator from "../components/Indicator";
 import Slider from "../components/Slider";
 import Picker from "../components/Picker";
-import { availableInstruments, baseMidiInputs } from "../constants";
+import { availableInstruments } from "../constants";
 import { useSettings } from "../contexts/settings";
 import useAppSelector from "../hooks/useAppSelector";
+import { useMidi } from "../contexts/midi";
 
 const margins = {
   vertical: 16,
@@ -84,8 +85,7 @@ function Subsection({
 }
 
 export default function Settings({ navigation }: SettingsProps) {
-  const availableMidiInputs = [...baseMidiInputs, ...[]];
-
+  const midi = useMidi();
   const settings = useSettings();
 
   const code = useAppSelector((state) => state.code.code);
@@ -97,28 +97,28 @@ export default function Settings({ navigation }: SettingsProps) {
   );
 
   const handleNoteOnSliderComplete = React.useCallback(
-    async (value: number | number[]) =>
-      await settings.noteOnVelocity.setValue(
+    (value: number | number[]) =>
+      settings.noteOnVelocity.setValue(() =>
         (Array.isArray(value) ? value[0] : value).toString()
       ),
     [settings.noteOnVelocity.setValue]
   );
 
   const handleNoteOffSliderComplete = React.useCallback(
-    async (value: number | number[]) =>
-      await settings.noteOffVelocity.setValue(
+    (value: number | number[]) =>
+      settings.noteOffVelocity.setValue(() =>
         (Array.isArray(value) ? value[0] : value).toString()
       ),
     [settings.noteOffVelocity.setValue]
   );
 
   const handleInstrumentPickerChange = React.useCallback(
-    async (value: string) => await settings.instrument.setValue(value),
+    (value: string) => settings.instrument.setValue(() => value),
     [settings.instrument.setValue]
   );
 
   const handleMidiInputPickerChange = React.useCallback(
-    async (value: string) => await settings.midiInput.setValue(value),
+    (value: string) => settings.midiInput.setValue(() => value),
     [settings.midiInput.setValue]
   );
 
@@ -226,7 +226,7 @@ export default function Settings({ navigation }: SettingsProps) {
                 <Picker
                   placeholder={{}}
                   value={settings.midiInput.value}
-                  items={availableMidiInputs}
+                  items={midi.inputs}
                   onValueChange={handleMidiInputPickerChange}
                 />
               </Subsection>

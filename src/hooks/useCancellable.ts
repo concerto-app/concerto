@@ -4,7 +4,7 @@ type CancelInfo = {
   cancelled: boolean;
 };
 
-type Callback = (cancelInfo: CancelInfo) => any;
+type Callback = (cancelInfo: CancelInfo) => void | (() => any);
 
 export default function useCancellable(
   callback: Callback,
@@ -15,10 +15,11 @@ export default function useCancellable(
       cancelled: false,
     };
 
-    setTimeout(() => callback(cancelInfo));
+    const cleanup = callback(cancelInfo);
 
     return () => {
       cancelInfo.cancelled = true;
+      cleanup && cleanup();
     };
   }, deps);
 }

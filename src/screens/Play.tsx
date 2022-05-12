@@ -8,27 +8,27 @@ import Marker from "../components/Marker";
 import Emoji from "../components/emojis/Emoji";
 import Indicator from "../components/Indicator";
 import { mapMap } from "../utils";
-import Player, { loadPlayer } from "../sound/Player";
+import Player from "../sound/Player";
 import { useSettings } from "../contexts/settings";
-import { allOctaveNotes } from "../components/keyboard/constants";
 import KeyboardHintOverlay from "../components/keyboard/KeyboardHintOverlay";
 import { debounce } from "lodash";
 import useCancellable from "../hooks/useCancellable";
 import useAppSelector from "../hooks/useAppSelector";
 import useAppDispatch from "../hooks/useAppDispatch";
-import Room, { RoomEvent } from "../Room";
+import { RoomEvent } from "../Room";
 import { addUser, removeUser } from "../state/slices/users";
+import { getNotesForRange } from "../sound/utils";
+import { useRoom } from "../contexts/room";
+import { useMidi } from "../contexts/midi";
+import { usePlayer } from "../contexts/player";
 
-type KeyboardState = Map<Key, UserId>;
+type KeyboardState = Map<number, UserId>;
 
 const octaves = 7;
 const buttonSize = 45;
 const buttonMargin = 16;
 
-const octaveNums = [...Array(octaves).keys()].map((octave) => octave + 1);
-const allNotes = allOctaveNotes.flatMap((note) =>
-  octaveNums.map((octave) => note + octave)
-);
+const allNotes = getNotesForRange(octaves);
 
 const fallbackEmoji = "1f32d";
 
@@ -68,12 +68,13 @@ function SettingsButton({
 
 export default function Play({ navigation }: PlayProps) {
   const [scrolling, setScrolling] = React.useState<boolean>(false);
-  const [player, setPlayer] = React.useState<Player>();
-  const [room, setRoom] = React.useState<Room>();
   const [keyboardState, setKeyboardState] = React.useState<KeyboardState>(
     new Map()
   );
 
+  const room = useRoom();
+  const midi = useMidi();
+  const player = usePlayer();
   const settings = useSettings();
 
   const dispatch = useAppDispatch();
@@ -83,48 +84,81 @@ export default function Play({ navigation }: PlayProps) {
   const getUserEmoji = (userId: UserId) =>
     users.find((user) => user.id === userId)?.emoji;
 
-  const handleKeyPressedIn = (key: Key, user: UserId, velocity?: number) => {
+  const handleKeyPressedIn = (
+    player: Player,
+    note: number,
+    user: UserId,
+    velocity: number
+  ) => {
     setKeyboardState((prevState) => {
-      if (prevState.has(key)) return prevState;
-      if (player && velocity) player.start(key, velocity).then();
-      return new Map(prevState).set(key, user);
+      if (prevState.has(note)) return prevState;
+      player.start(note, velocity).then();
+      return new Map(prevState).set(note, user);
     });
   };
 
-  const handleKeyPressedOut = (key: Key, user: UserId, velocity?: number) => {
+  const handleKeyPressedOut = (
+    player: Player,
+    note: number,
+    user: UserId,
+    velocity: number
+  ) => {
     setKeyboardState((prevState) => {
-      if (!prevState.has(key) || prevState.get(key) !== user) return prevState;
-      if (player && velocity) player.stop(key, velocity).then();
+      if (!prevState.has(note) || prevState.get(note) !== user)
+        return prevState;
+      player.stop(note, velocity).then();
       const stateCopy = new Map(prevState);
-      stateCopy.delete(key);
+      stateCopy.delete(note);
       return stateCopy;
     });
   };
 
   const handleUserKeyPressedIn = React.useCallback(
-    (note: string, octave: number) => {
-      if (!room || !player || settings.noteOnVelocity.value === undefined)
-        return;
+    (note: number, velocity: number) => {
       room.dispatch({
-        key: note + octave,
+        note: note,
         type: "press",
-        velocity: Number(settings.noteOffVelocity.value),
+        velocity: velocity,
       });
     },
-    [room, settings.noteOnVelocity.value]
+    [room]
+  );
+
+  const handleUserScreenKeyPressedIn = React.useCallback(
+    (note: number) => {
+      if (settings.noteOnVelocity.value === undefined) return;
+      handleUserKeyPressedIn(note, Number(settings.noteOnVelocity.value));
+    },
+    [handleUserKeyPressedIn, settings.noteOnVelocity.value]
+  );
+
+  const handleUserMidiKeyPressedIn = React.useCallback(
+    (note: number, velocity: number) => handleUserKeyPressedIn(note, velocity),
+    [handleUserKeyPressedIn]
   );
 
   const handleUserKeyPressedOut = React.useCallback(
-    (note: string, octave: number) => {
-      if (!room || !player || settings.noteOffVelocity.value === undefined)
-        return;
+    (note: number, velocity: number) => {
       room.dispatch({
-        key: note + octave,
+        note: note,
         type: "release",
-        velocity: Number(settings.noteOffVelocity.value),
+        velocity: velocity,
       });
     },
-    [room, settings.noteOffVelocity.value]
+    [room]
+  );
+
+  const handleUserScreenKeyPressedOut = React.useCallback(
+    (note: number) => {
+      if (settings.noteOffVelocity.value === undefined) return;
+      handleUserKeyPressedOut(note, Number(settings.noteOffVelocity.value));
+    },
+    [handleUserKeyPressedOut, settings.noteOffVelocity.value]
+  );
+
+  const handleUserMidiKeyPressedOut = React.useCallback(
+    (note: number, velocity: number) => handleUserKeyPressedOut(note, velocity),
+    [handleUserKeyPressedOut]
   );
 
   const handleSettingsButtonPress = React.useCallback(() => {
@@ -139,7 +173,11 @@ export default function Play({ navigation }: PlayProps) {
     debouncer.cancel();
     setScrolling(true);
   }, [debouncer]);
-  const handleScrollEnd = React.useCallback(() => debouncer(false), []);
+
+  const handleScrollEnd = React.useCallback(
+    () => debouncer(false),
+    [debouncer]
+  );
 
   const handleRoomConnected = React.useCallback(
     (id: UserId, emoji: EmojiId) => {
@@ -172,17 +210,18 @@ export default function Play({ navigation }: PlayProps) {
 
   const handleRoomEvent = React.useCallback(
     (event: RoomEvent) => {
-      if (!player) return;
       switch (event.action.type) {
         case "press":
           return handleKeyPressedIn(
-            event.action.key,
+            player,
+            event.action.note,
             event.user,
             event.action.velocity
           );
         case "release":
           return handleKeyPressedOut(
-            event.action.key,
+            player,
+            event.action.note,
             event.user,
             event.action.velocity
           );
@@ -191,42 +230,63 @@ export default function Play({ navigation }: PlayProps) {
     [player]
   );
 
-  useCancellable(
-    (cancelInfo) => {
-      if (!code) return;
-      const room = new Room(
-        code,
-        handleRoomConnected,
-        handleUserConnected,
-        handleUserDisconnected,
-        handleRoomEvent
-      );
-      cancelInfo.cancelled ? room.disconnect() : setRoom(room);
-    },
-    [
+  useCancellable(() => {
+    if (!code) return;
+    room.connect(
       code,
       handleRoomConnected,
       handleUserConnected,
       handleUserDisconnected,
-      handleRoomEvent,
-    ]
-  );
+      handleRoomEvent
+    );
+    return () => {
+      room.disconnect();
+    };
+  }, [
+    room,
+    JSON.stringify(code),
+    handleRoomConnected,
+    handleUserConnected,
+    handleUserDisconnected,
+    handleRoomEvent,
+  ]);
 
-  useCancellable(
-    async (cancelInfo) => {
-      if (!settings.instrument.value) return;
-      player && (await player.destroy());
-      const newPlayer = await loadPlayer(settings.instrument.value, allNotes);
-      cancelInfo.cancelled ? await newPlayer.destroy() : setPlayer(newPlayer);
-    },
-    [settings.instrument.value, allNotes]
-  );
+  useCancellable(() => {
+    if (
+      settings.midiInput.value === undefined ||
+      settings.midiInput.value === "none"
+    )
+      return;
+    midi.controller.disconnect();
+    midi.controller.connect(
+      Number(settings.midiInput.value),
+      handleUserMidiKeyPressedIn,
+      handleUserMidiKeyPressedOut
+    );
+    return () => {
+      midi.controller.disconnect();
+    };
+  }, [
+    midi.controller,
+    settings.midiInput.value,
+    handleUserMidiKeyPressedIn,
+    handleUserMidiKeyPressedOut,
+  ]);
 
-  if (!player || !room) return null;
+  useCancellable(() => {
+    if (settings.instrument.value === undefined) return;
 
-  const currentUserEmoji = getUserEmoji(room.currentUser);
+    const load = async (instrument: string, notes: number[]) => {
+      await player.unload();
+      await player.load(instrument, notes);
+    };
 
-  if (!currentUserEmoji) return null;
+    load(settings.instrument.value, allNotes).then();
+
+    return () => {
+      player.unload().then();
+    };
+  }, [player, settings.instrument.value, JSON.stringify(allNotes)]);
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>
@@ -243,8 +303,8 @@ export default function Play({ navigation }: PlayProps) {
               pressedKeys={mapMap(keyboardState, (user) => ({
                 emojiId: getUserEmoji(user) || fallbackEmoji,
               }))}
-              onKeyPressedIn={handleUserKeyPressedIn}
-              onKeyPressedOut={handleUserKeyPressedOut}
+              onKeyPressedIn={handleUserScreenKeyPressedIn}
+              onKeyPressedOut={handleUserScreenKeyPressedOut}
               octavesNumber={octaves}
             />
             <ReactNative.View
@@ -266,7 +326,11 @@ export default function Play({ navigation }: PlayProps) {
       >
         <SettingsButton
           text="2"
-          emojiId={currentUserEmoji}
+          emojiId={
+            room.currentUser
+              ? getUserEmoji(room.currentUser) || fallbackEmoji
+              : fallbackEmoji
+          }
           size={buttonSize}
           margin={buttonMargin}
           onPress={handleSettingsButtonPress}
