@@ -8,10 +8,11 @@ export default function useSvg(uri: string) {
   const [svg, setSvg] = useState<SkSVG>();
 
   useCancellable(
-    async (cancelInfo) => {
-      const data = await FileSystem.readAsStringAsync(uri);
-      const newSvg = Skia.SVG.MakeFromString(data);
-      if (!cancelInfo.cancelled && newSvg) setSvg(newSvg);
+    (cancelInfo) => {
+      FileSystem.readAsStringAsync(uri).then((data) => {
+        const newSvg = Skia.SVG.MakeFromString(data);
+        if (!cancelInfo.cancelled && newSvg) setSvg(newSvg);
+      });
     },
     [uri]
   );

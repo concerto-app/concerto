@@ -22,15 +22,17 @@ export default function Main({ route, navigation }: MainProps) {
     if (localCode.length < codeLength) setLocalCode([...localCode, emojiId]);
   };
 
-  React.useEffect(
-    () =>
-      navigation.addListener("focus", () => {
-        setLocalCode([]);
-        dispatch(resetCode());
-        dispatch(resetUsers());
-      }),
-    [navigation]
-  );
+  React.useEffect(() => {
+    const callback = () => {
+      setLocalCode([]);
+      dispatch(resetCode());
+      dispatch(resetUsers());
+    };
+    navigation.addListener("focus", callback);
+    return () => {
+      navigation.removeListener("focus", callback);
+    };
+  }, [navigation]);
 
   useCancellable(
     (cancelInfo) => {
@@ -40,7 +42,7 @@ export default function Main({ route, navigation }: MainProps) {
         navigation.navigate("play", {});
       }
     },
-    [localCode]
+    [JSON.stringify(localCode)]
   );
 
   return (

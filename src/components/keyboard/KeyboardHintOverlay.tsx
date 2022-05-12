@@ -3,15 +3,14 @@ import Heading from "../text/Heading";
 import {
   blackKeyHeightScale,
   blackKeyWidthScale,
+  blacksGapIndex,
   defaultKeyboardLayoutProps,
-  flatsIndex,
   keyColors,
-  octaveBlackNotes,
-  octaveWhiteNotes,
 } from "./constants";
 import React from "react";
 import ReactNative from "react-native";
 import equal from "fast-deep-equal/react";
+import { blackNoteNames, whiteNoteNames } from "../../sound/constants";
 
 export type KeyboardHintOverlayProps = KeyboardLayoutProps;
 
@@ -36,9 +35,9 @@ function KeyboardHintOverlay({
           <ReactNative.View
             style={{ flexDirection: "row", paddingVertical: spacing }}
           >
-            {octaveWhiteNotes.map((note) => (
+            {whiteNoteNames.map((noteName) => (
               <ReactNative.View
-                key={note + octave}
+                key={noteName + octave}
                 style={{
                   width: keyWidth,
                   height: keyHeight,
@@ -64,21 +63,21 @@ function KeyboardHintOverlay({
                       color: keyColors.black.foregroundTop,
                     }}
                   >
-                    {note + octave}
+                    {noteName + octave}
                   </Heading>
                 </ReactNative.View>
               </ReactNative.View>
             ))}
           </ReactNative.View>
           <ReactNative.View style={{ position: "absolute" }}>
-            {octaveBlackNotes.map((note) => (
+            {blackNoteNames.map((noteName) => (
               <ReactNative.View
-                key={note + octave}
+                key={noteName + octave}
                 style={{
                   position: "absolute",
                   top: spacing,
                   start:
-                    flatsIndex[note] * (keyWidth + spacing) +
+                    blacksGapIndex[noteName] * (keyWidth + spacing) +
                     0.5 * spacing -
                     0.5 * (blackKeyWidth + 2 * spacing),
                   width: blackKeyWidth,
@@ -104,7 +103,7 @@ function KeyboardHintOverlay({
                       color: keyColors.white.foregroundBottom,
                     }}
                   >
-                    {note + octave}
+                    {noteName + octave}
                   </Heading>
                 </ReactNative.View>
               </ReactNative.View>

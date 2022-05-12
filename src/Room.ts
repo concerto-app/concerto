@@ -1,5 +1,5 @@
 export type Action = {
-  key: Key;
+  note: number;
   type: "press" | "release";
   velocity: number;
 };
@@ -10,30 +10,29 @@ export type RoomEvent = {
 };
 
 export default class Room {
-  public readonly currentUser: UserId;
-  private readonly code: Code;
-  private readonly onConnected: (id: UserId, emoji: EmojiId) => any;
-  private readonly onUserConnect: (id: UserId, emoji: EmojiId) => any;
-  private readonly onUserDisconnect: (id: UserId) => any;
-  private readonly onEvent: (event: RoomEvent) => any;
+  public currentUser?: UserId;
+  private connected: boolean = false;
+  private code?: Code;
+  private onEvent?: (event: RoomEvent) => any;
 
-  constructor(
+  connect(
     code: Code,
     onConnected: (id: UserId, emoji: EmojiId) => any = () => {},
     onUserConnect: (id: UserId, emoji: EmojiId) => any = () => {},
     onUserDisconnect: (id: UserId) => any = () => {},
     onEvent: (event: RoomEvent) => any = () => {}
   ) {
+    if (this.connected) return;
+
     this.code = code;
-    this.onConnected = onConnected;
-    this.onUserConnect = onUserConnect;
-    this.onUserDisconnect = onUserDisconnect;
     this.onEvent = onEvent;
 
     const connection = this._connect(code);
     this.currentUser = connection.userId;
 
-    setTimeout(() => onConnected(this.currentUser, connection.emoji));
+    setTimeout(() => onConnected(connection.userId, connection.emoji));
+
+    this.connected = true;
   }
 
   _connect(code: Code) {
@@ -43,12 +42,21 @@ export default class Room {
     };
   }
 
-  disconnect() {}
+  disconnect() {
+    if (!this.connected) return;
+
+    this.currentUser = undefined;
+    this.code = undefined;
+
+    this.connected = false;
+  }
 
   dispatch(action: Action) {
-    this.onEvent({
-      user: this.currentUser,
-      action: action,
-    });
+    this.currentUser &&
+      this.onEvent &&
+      this.onEvent({
+        user: this.currentUser,
+        action: action,
+      });
   }
 }

@@ -17,6 +17,10 @@ import React from "react";
 import { SettingsProvider } from "./src/contexts/settings";
 import { Provider } from "react-redux";
 import { store } from "./src/state/store";
+import { MidiProvider } from "./src/contexts/midi";
+import { RoomProvider } from "./src/contexts/room";
+import { PlayerProvider } from "./src/contexts/player";
+import { LogBox } from "react-native";
 
 const fonts = {
   Nunito_700Bold,
@@ -47,6 +51,13 @@ const availableEmojiCodes = [
   "1f32d",
 ];
 
+function configureLogging() {
+  LogBox.ignoreLogs([
+    "`new NativeEventEmitter()`",
+    "EventEmitter.removeListener",
+  ]);
+}
+
 export default function App() {
   useDeviceContext(tw);
 
@@ -59,6 +70,7 @@ export default function App() {
 
   React.useEffect(() => {
     SplashScreen.preventAutoHideAsync().then();
+    configureLogging();
   }, []);
 
   if (!fontsLoaded) return null;
@@ -66,32 +78,38 @@ export default function App() {
   return (
     <Provider store={store}>
       <SettingsProvider>
-        <NavigationContainer onReady={onLayoutReady}>
-          <Stack.Navigator
-            initialRouteName="main"
-            screenOptions={{
-              headerShown: false,
-              statusBarHidden: true,
-            }}
-          >
-            <Stack.Screen
-              name="main"
-              component={gestureHandlerRootHOC(Main)}
-              initialParams={{ availableEmojiCodes: availableEmojiCodes }}
-              options={{ orientation: "default" }}
-            />
-            <Stack.Screen
-              name="play"
-              component={gestureHandlerRootHOC(Play)}
-              options={{ orientation: "landscape" }}
-            />
-            <Stack.Screen
-              name="settings"
-              component={gestureHandlerRootHOC(Settings)}
-              options={{ orientation: "default" }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <MidiProvider>
+          <RoomProvider>
+            <PlayerProvider>
+              <NavigationContainer onReady={onLayoutReady}>
+                <Stack.Navigator
+                  initialRouteName="main"
+                  screenOptions={{
+                    headerShown: false,
+                    statusBarHidden: true,
+                  }}
+                >
+                  <Stack.Screen
+                    name="main"
+                    component={gestureHandlerRootHOC(Main)}
+                    initialParams={{ availableEmojiCodes: availableEmojiCodes }}
+                    options={{ orientation: "default" }}
+                  />
+                  <Stack.Screen
+                    name="play"
+                    component={gestureHandlerRootHOC(Play)}
+                    options={{ orientation: "landscape" }}
+                  />
+                  <Stack.Screen
+                    name="settings"
+                    component={gestureHandlerRootHOC(Settings)}
+                    options={{ orientation: "default" }}
+                  />
+                </Stack.Navigator>
+              </NavigationContainer>
+            </PlayerProvider>
+          </RoomProvider>
+        </MidiProvider>
       </SettingsProvider>
     </Provider>
   );

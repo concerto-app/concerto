@@ -24,20 +24,7 @@ export const keyColors = {
   },
 };
 
-export const octaveWhiteNotes: Array<string> = [
-  "C",
-  "D",
-  "E",
-  "F",
-  "G",
-  "A",
-  "B",
-];
-export const octaveBlackNotes: Array<string> = ["Db", "Eb", "Gb", "Ab", "Bb"];
-
-export const allOctaveNotes = [...octaveWhiteNotes, ...octaveBlackNotes];
-
-export const flatsIndex: Record<string, number> = {
+export const blacksGapIndex: Record<string, number> = {
   Db: 1,
   Eb: 2,
   Gb: 4,
@@ -45,7 +32,7 @@ export const flatsIndex: Record<string, number> = {
   Bb: 6,
 };
 
-export const noteColors: Record<string, string> = {
+export const noteNameColors: Record<string, string> = {
   C: "#ff0939",
   Db: "#ff9244",
   D: "#fffc58",
