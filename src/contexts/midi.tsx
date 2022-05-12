@@ -2,7 +2,7 @@ import React from "react";
 import MidiController, { DeviceInfo } from "../sound/MidiController";
 import { useSettings } from "./settings";
 import Midi from "react-native-midi";
-import { baseMidiInputs } from "../constants";
+import { baseMidiInputs, defaultMidiInput } from "../constants";
 import useCancellable from "../hooks/useCancellable";
 
 const MidiContext = React.createContext<
@@ -26,7 +26,7 @@ export function MidiProvider(props: { children: React.ReactNode }) {
         },
       ]);
       settings.midiInput.setValue((previous) => {
-        if (previous === "none") return device.id.toString();
+        if (previous === defaultMidiInput) return device.id.toString();
         return previous;
       });
     });
@@ -36,7 +36,7 @@ export function MidiProvider(props: { children: React.ReactNode }) {
         previous.filter((input) => input.value !== device.id.toString())
       );
       settings.midiInput.setValue((previous) => {
-        if (previous === device.id.toString()) return "none";
+        if (previous === device.id.toString()) return defaultMidiInput;
         return previous;
       });
     });
@@ -56,11 +56,11 @@ export function MidiProvider(props: { children: React.ReactNode }) {
           })),
         ]);
         settings.midiInput.setValue((previous) => {
-          if (previous === "none") return previous;
+          if (previous === defaultMidiInput) return previous;
           const device = devices.find(
             (device) => device.id.toString() === previous
           );
-          if (!device) return "none";
+          if (!device) return defaultMidiInput;
           return previous;
         });
       });
