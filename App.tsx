@@ -61,6 +61,10 @@ function configureLogging() {
   ]);
 }
 
+const mainScreen = gestureHandlerRootHOC(Main);
+const playScreen = gestureHandlerRootHOC(Play);
+const settingsScreen = gestureHandlerRootHOC(Settings);
+
 export default function App() {
   useDeviceContext(tw);
 
@@ -79,12 +83,12 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <Provider store={store}>
-      <SettingsProvider>
-        <MidiProvider>
-          <RoomProvider>
-            <PlayerProvider>
-              <NavigationContainer onReady={onLayoutReady}>
+    <NavigationContainer onReady={onLayoutReady}>
+      <Provider store={store}>
+        <SettingsProvider>
+          <MidiProvider>
+            <RoomProvider url={serverUrl}>
+              <PlayerProvider>
                 <Stack.Navigator
                   initialRouteName="main"
                   screenOptions={{
@@ -94,26 +98,26 @@ export default function App() {
                 >
                   <Stack.Screen
                     name="main"
-                    component={gestureHandlerRootHOC(Main)}
+                    component={mainScreen}
                     initialParams={{ availableEmojiCodes: availableEmojiCodes }}
                     options={{ orientation: "default" }}
                   />
                   <Stack.Screen
                     name="play"
-                    component={gestureHandlerRootHOC(Play)}
+                    component={playScreen}
                     options={{ orientation: "landscape" }}
                   />
                   <Stack.Screen
                     name="settings"
-                    component={gestureHandlerRootHOC(Settings)}
+                    component={settingsScreen}
                     options={{ orientation: "default" }}
                   />
                 </Stack.Navigator>
-              </NavigationContainer>
-            </PlayerProvider>
-          </RoomProvider>
-        </MidiProvider>
-      </SettingsProvider>
-    </Provider>
+              </PlayerProvider>
+            </RoomProvider>
+          </MidiProvider>
+        </SettingsProvider>
+      </Provider>
+    </NavigationContainer>
   );
 }
