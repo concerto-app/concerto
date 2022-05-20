@@ -5,7 +5,7 @@ import useSvg from "../../hooks/useSvg";
 import useCancellable from "../../hooks/useCancellable";
 
 export type EmojiProps = Omit<SvgProps, "width" | "height" | "svg"> & {
-  id: EmojiId;
+  id: string;
   size: number;
 };
 

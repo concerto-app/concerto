@@ -7,7 +7,7 @@ export type RootStackParamList = {
 };
 
 export type MainParams = {
-  availableEmojiCodes: Array<EmojiId>;
+  availableEmojiCodes: Array<string>;
   codeLength?: number;
 };
 

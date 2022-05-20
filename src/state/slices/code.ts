@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface CodeState {
-  code?: Code;
+  code?: Array<string>;
 }
 
 const initialState: CodeState = {
@@ -12,7 +12,7 @@ export const codeSlice = createSlice({
   name: "code",
   initialState,
   reducers: {
-    setCode: (state, action: PayloadAction<Code>) => {
+    setCode: (state, action: PayloadAction<Array<string>>) => {
       state.code = action.payload;
     },
     resetCode: (state) => {

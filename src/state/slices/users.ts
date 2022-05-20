@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 type UserState = {
-  id: UserId;
-  emoji: EmojiId;
+  id: string;
+  emoji: string;
 };
 
 export interface UsersState {
@@ -25,7 +25,7 @@ export const usersSlice = createSlice({
       const otherUsers = state.users.filter((user) => user.id !== newUser.id);
       state.users = [...otherUsers, newUser];
     },
-    removeUser: (state, action: PayloadAction<UserId>) => {
+    removeUser: (state, action: PayloadAction<string>) => {
       state.users = state.users.filter((user) => user.id !== action.payload);
     },
     resetUsers: (state) => {

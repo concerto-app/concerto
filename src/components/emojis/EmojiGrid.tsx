@@ -5,13 +5,13 @@ import { BorderlessButton, ScrollView } from "react-native-gesture-handler";
 import React from "react";
 
 export type EmojiGridProps = ReactNative.ViewProps & {
-  emojiIds: Array<EmojiId>;
+  emojiIds: Array<string>;
   horizontal?: boolean;
   edgeMargin?: number;
   emojiMargin?: number;
   emojiSize?: number;
   emojiCanvasScale?: number;
-  onEmojiSelected?: (emojiId: EmojiId) => void;
+  onEmojiSelected?: (emojiId: string) => void;
 };
 
 export default function EmojiGrid({

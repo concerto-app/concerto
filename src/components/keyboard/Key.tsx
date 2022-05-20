@@ -6,7 +6,7 @@ import React from "react";
 import equal from "fast-deep-equal/react";
 
 export type PressedInfo = {
-  emojiId: EmojiId;
+  emojiId: string;
 };
 
 export type KeyProps = ReactNative.ViewProps & {
@@ -43,7 +43,7 @@ const ReleasedForeground = (props: {
   );
 };
 
-const PressedForeground = (props: { width: number; emojiId?: EmojiId }) => {
+const PressedForeground = (props: { width: number; emojiId?: string }) => {
   const [previousEmoji, setPreviousEmoji] = React.useState<string>();
 
   React.useEffect(() => {

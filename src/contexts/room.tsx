@@ -1,10 +1,13 @@
 import React from "react";
-import Room from "../Room";
+import Room from "../server/Room";
 
 const RoomContext = React.createContext<Room | undefined>(undefined);
 
-export function RoomProvider(props: { children: React.ReactNode }) {
-  const room = React.useMemo(() => new Room(), []);
+export function RoomProvider(props: {
+  url: string;
+  children: React.ReactNode;
+}) {
+  const room = React.useMemo(() => new Room(props.url), []);
   return <RoomContext.Provider value={room} children={props.children} />;
 }
 

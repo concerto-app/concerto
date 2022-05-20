@@ -15,15 +15,16 @@ import { debounce } from "lodash";
 import useCancellable from "../hooks/useCancellable";
 import useAppSelector from "../hooks/useAppSelector";
 import useAppDispatch from "../hooks/useAppDispatch";
-import { RoomEvent } from "../Room";
-import { addUser, removeUser } from "../state/slices/users";
+import { RoomEvent } from "../server/Room";
+import { addUser, removeUser, setUsers } from "../state/slices/users";
 import { getNotesForRange } from "../sound/utils";
 import { useRoom } from "../contexts/room";
 import { useMidi } from "../contexts/midi";
 import { usePlayer } from "../contexts/player";
 import { defaultMidiInput } from "../constants";
+import { User } from "../server/models";
 
-type KeyboardState = Map<number, UserId>;
+type KeyboardState = Map<number, string>;
 
 const octaves = 7;
 const buttonSize = 45;
@@ -41,7 +42,7 @@ function SettingsButton({
   onPress,
 }: {
   text: string;
-  emojiId: EmojiId;
+  emojiId: string;
   size: number;
   margin: number;
   onPress?: (pointerInside: boolean) => void;
@@ -82,13 +83,15 @@ export default function Play({ navigation }: PlayProps) {
   const code = useAppSelector((state) => state.code.code);
   const users = useAppSelector((state) => state.users.users);
 
-  const getUserEmoji = (userId: UserId) =>
+  const [user, setUser] = React.useState<string>();
+
+  const getUserEmoji = (userId: string) =>
     users.find((user) => user.id === userId)?.emoji;
 
   const handleKeyPressedIn = (
     player: Player,
     note: number,
-    user: UserId,
+    user: string,
     velocity: number
   ) => {
     setKeyboardState((prevState) => {
@@ -101,7 +104,7 @@ export default function Play({ navigation }: PlayProps) {
   const handleKeyPressedOut = (
     player: Player,
     note: number,
-    user: UserId,
+    user: string,
     velocity: number
   ) => {
     setKeyboardState((prevState) => {
@@ -181,23 +184,26 @@ export default function Play({ navigation }: PlayProps) {
   );
 
   const handleRoomConnected = React.useCallback(
-    (id: UserId, emoji: EmojiId) => {
+    (user: User, connectedUsers: User[]) => {
       dispatch(
-        addUser({
-          id: id,
-          emoji: emoji,
-        })
+        setUsers(
+          [user, ...connectedUsers].map((user) => ({
+            id: user.id,
+            emoji: user.avatar.emoji.id,
+          }))
+        )
       );
+      setUser(user.id);
     },
     [dispatch]
   );
 
   const handleUserConnected = React.useCallback(
-    (id: UserId, emoji: EmojiId) => {
+    (user: User) => {
       dispatch(
         addUser({
-          id: id,
-          emoji: emoji,
+          id: user.id,
+          emoji: user.avatar.emoji.id,
         })
       );
     },
@@ -205,7 +211,7 @@ export default function Play({ navigation }: PlayProps) {
   );
 
   const handleUserDisconnected = React.useCallback(
-    (id: UserId) => dispatch(removeUser(id)),
+    (id: string) => dispatch(removeUser(id)),
     [dispatch]
   );
 
@@ -228,20 +234,22 @@ export default function Play({ navigation }: PlayProps) {
           );
       }
     },
-    [player]
+    [player.player]
   );
 
   useCancellable(() => {
     if (!code) return;
-    room.connect(
-      code,
-      handleRoomConnected,
-      handleUserConnected,
-      handleUserDisconnected,
-      handleRoomEvent
-    );
+    room
+      .connect(
+        code,
+        handleRoomConnected,
+        handleUserConnected,
+        handleUserDisconnected,
+        handleRoomEvent
+      )
+      .then();
     return () => {
-      room.disconnect();
+      room.disconnect().then();
     };
   }, [
     room,
@@ -326,12 +334,8 @@ export default function Play({ navigation }: PlayProps) {
         style={tw.style("w-full", "h-full", "absolute", "items-end")}
       >
         <SettingsButton
-          text="2"
-          emojiId={
-            room.currentUser
-              ? getUserEmoji(room.currentUser) || fallbackEmoji
-              : fallbackEmoji
-          }
+          text={users.length.toString()}
+          emojiId={user ? getUserEmoji(user) || fallbackEmoji : fallbackEmoji}
           size={buttonSize}
           margin={buttonMargin}
           onPress={handleSettingsButtonPress}
