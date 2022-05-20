@@ -2,6 +2,7 @@ import { downloadNetworkAsset } from "../utils";
 import * as FileSystem from "expo-file-system";
 import Sound from "./Sound";
 import { getFullName } from "./utils";
+import AsyncLock from "async-lock";
 
 export default class Player {
   private loaded: boolean = false;
@@ -10,28 +11,34 @@ export default class Player {
   private readonly playingSounds: Map<number, Sound> = new Map<number, Sound>();
   private readonly timeouts: Set<NodeJS.Timeout> = new Set<NodeJS.Timeout>();
 
+  private lock: AsyncLock = new AsyncLock();
+
   async load(instrument: string, notes: number[]) {
-    if (this.loaded) return;
+    await this.lock.acquire("loading", async () => {
+      if (this.loaded) return;
 
-    const noteFiles = await downloadNotes(instrument, notes);
-    noteFiles.forEach((noteFile) =>
-      this.noteFiles.set(noteFile.note, noteFile.uri)
-    );
+      const noteFiles = await downloadNotes(instrument, notes);
+      noteFiles.forEach((noteFile) =>
+        this.noteFiles.set(noteFile.note, noteFile.uri)
+      );
 
-    this.loaded = true;
+      this.loaded = true;
+    });
   }
 
   async unload() {
-    if (!this.loaded) return;
+    await this.lock.acquire("loading", async () => {
+      if (!this.loaded) return;
 
-    this.timeouts.forEach((timeout) => clearTimeout(timeout));
-    this.timeouts.clear();
-    await Promise.all(
-      [...this.playingSounds.values()].map((sound) => sound.unload())
-    );
-    this.playingSounds.clear();
+      this.timeouts.forEach((timeout) => clearTimeout(timeout));
+      this.timeouts.clear();
+      await Promise.all(
+        [...this.playingSounds.values()].map((sound) => sound.unload())
+      );
+      this.playingSounds.clear();
 
-    this.loaded = false;
+      this.loaded = false;
+    });
   }
 
   _timeout(callback: () => {}, interval: number = 0) {

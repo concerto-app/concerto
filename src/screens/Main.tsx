@@ -14,11 +14,11 @@ import { resetUsers } from "../state/slices/users";
 export default function Main({ route, navigation }: MainProps) {
   const { availableEmojiCodes, codeLength = 3 } = route.params;
 
-  const [localCode, setLocalCode] = React.useState<Code>([]);
+  const [localCode, setLocalCode] = React.useState<Array<string>>([]);
 
   const dispatch = useAppDispatch();
 
-  const onEmojiSelected: (emojiId: EmojiId) => void = (emojiId: EmojiId) => {
+  const onEmojiSelected: (emojiId: string) => void = (emojiId: string) => {
     if (localCode.length < codeLength) setLocalCode([...localCode, emojiId]);
   };
 

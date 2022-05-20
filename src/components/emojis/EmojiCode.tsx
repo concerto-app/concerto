@@ -4,7 +4,7 @@ import ReactNative from "react-native";
 import React from "react";
 
 export type EmojiCodeProps = ReactNative.ViewProps & {
-  code: Code;
+  code: Array<string>;
   length: number;
   size?: number;
   margin?: number;
