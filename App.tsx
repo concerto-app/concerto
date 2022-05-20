@@ -21,6 +21,7 @@ import { MidiProvider } from "./src/contexts/midi";
 import { RoomProvider } from "./src/contexts/room";
 import { PlayerProvider } from "./src/contexts/player";
 import { LogBox } from "react-native";
+import Constants from "expo-constants";
 
 const fonts = {
   Nunito_700Bold,
@@ -50,6 +51,8 @@ const availableEmojiCodes = [
   "1f355",
   "1f32d",
 ];
+
+const serverUrl = Constants.manifest?.extra?.serverUrl;
 
 function configureLogging() {
   LogBox.ignoreLogs([

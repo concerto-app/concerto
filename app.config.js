@@ -1,19 +1,19 @@
+import dotenv from "dotenv";
+
 const variant = process.env.APP_VARIANT || "development";
 
-const namePerVariant = {
-  development: "concerto (dev)",
-  preview: "concerto (preview)",
-  production: "concerto",
+const defaultEnvFilePerVariant = {
+  development: ".env/dev.env",
+  preview: ".env/preview.env",
+  production: ".env/prod.env",
 };
 
-const packageNamePerVariant = {
-  development: "com.spietras.concerto.dev",
-  preview: "com.spietras.concerto.preview",
-  production: "com.spietras.concerto",
-};
+const envFile = process.env.ENV_FILE || defaultEnvFilePerVariant[variant];
+
+dotenv.config({ path: envFile });
 
 export default {
-  name: namePerVariant[variant] || "concerto",
+  name: process.env.APP_NAME || "concerto",
   slug: "concerto",
   version: "0.1.0",
   orientation: "default",
@@ -28,15 +28,19 @@ export default {
     fallbackToCacheTimeout: 0,
   },
   assetBundlePatterns: ["**/*"],
+  jsEngine: "hermes",
   android: {
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
     },
-    package: packageNamePerVariant[variant] || "com.spietras.concerto",
+    package: process.env.PACKAGE_NAME || "com.spietras.concerto",
   },
   androidNavigationBar: {
     visible: "immersive",
+  },
+  extra: {
+    serverUrl: process.env.SERVER_URL,
   },
   plugins: [
     [
@@ -45,5 +49,6 @@ export default {
         "https://cdn.jsdelivr.net/gh/kshoji/USB-MIDI-Driver@master/MIDIDriver/snapshots",
       ],
     ],
+    "@config-plugins/react-native-webrtc",
   ],
 };
