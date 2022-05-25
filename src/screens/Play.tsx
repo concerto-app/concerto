@@ -16,13 +16,13 @@ import useCancellable from "../hooks/useCancellable";
 import useAppSelector from "../hooks/useAppSelector";
 import useAppDispatch from "../hooks/useAppDispatch";
 import { RoomEvent } from "../server/Room";
-import { addUser, removeUser, setUsers } from "../state/slices/users";
+import { addUser, removeUser } from "../state/slices/users";
 import { getNotesForRange } from "../sound/utils";
 import { useRoom } from "../contexts/room";
 import { useMidi } from "../contexts/midi";
 import { usePlayer } from "../contexts/player";
-import { defaultMidiInput } from "../constants";
 import { User } from "../server/models";
+import { midiInputs } from "../constants";
 
 type KeyboardState = Map<number, string>;
 
@@ -184,14 +184,12 @@ export default function Play({ navigation }: PlayProps) {
   );
 
   const handleRoomConnected = React.useCallback(
-    (user: User, connectedUsers: User[]) => {
+    (user: User) => {
       dispatch(
-        setUsers(
-          [user, ...connectedUsers].map((user) => ({
-            id: user.id,
-            emoji: user.avatar.emoji.id,
-          }))
-        )
+        addUser({
+          id: user.id,
+          emoji: user.avatar.emoji.id,
+        })
       );
       setUser(user.id);
     },
@@ -263,7 +261,7 @@ export default function Play({ navigation }: PlayProps) {
   useCancellable(() => {
     if (
       settings.midiInput.value === undefined ||
-      settings.midiInput.value === defaultMidiInput
+      settings.midiInput.value === midiInputs.default
     )
       return;
     midi.controller.disconnect();
