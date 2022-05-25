@@ -1,8 +1,8 @@
 import React from "react";
 import Player, { getAvailableInstruments } from "../sound/Player";
-import { baseInstruments } from "../constants";
 import useCancellable from "../hooks/useCancellable";
 import { camelCase, startCase } from "lodash";
+import { instruments } from "../constants";
 
 const PlayerContext = React.createContext<
   | {
@@ -13,8 +13,9 @@ const PlayerContext = React.createContext<
 >(undefined);
 
 export function PlayerProvider(props: { children: React.ReactNode }) {
-  const [availableInstruments, setAvailableInstruments] =
-    React.useState(baseInstruments);
+  const [availableInstruments, setAvailableInstruments] = React.useState(
+    instruments.base
+  );
 
   useCancellable((cancelInfo) => {
     getAvailableInstruments().then((instruments) => {

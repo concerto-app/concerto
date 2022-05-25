@@ -2,8 +2,8 @@ import React from "react";
 import MidiController, { DeviceInfo } from "../sound/MidiController";
 import { useSettings } from "./settings";
 import Midi from "react-native-midi";
-import { baseMidiInputs, defaultMidiInput } from "../constants";
 import useCancellable from "../hooks/useCancellable";
+import { midiInputs } from "../constants";
 
 const MidiContext = React.createContext<
   | { controller: MidiController; inputs: { label: string; value: string }[] }
@@ -11,7 +11,7 @@ const MidiContext = React.createContext<
 >(undefined);
 
 export function MidiProvider(props: { children: React.ReactNode }) {
-  const [availableInputs, setAvailableInputs] = React.useState(baseMidiInputs);
+  const [availableInputs, setAvailableInputs] = React.useState(midiInputs.base);
 
   const settings = useSettings();
 
@@ -26,7 +26,7 @@ export function MidiProvider(props: { children: React.ReactNode }) {
         },
       ]);
       settings.midiInput.setValue((previous) => {
-        if (previous === defaultMidiInput) return device.id.toString();
+        if (previous === midiInputs.default) return device.id.toString();
         return previous;
       });
     });
@@ -36,7 +36,7 @@ export function MidiProvider(props: { children: React.ReactNode }) {
         previous.filter((input) => input.value !== device.id.toString())
       );
       settings.midiInput.setValue((previous) => {
-        if (previous === device.id.toString()) return defaultMidiInput;
+        if (previous === device.id.toString()) return midiInputs.default;
         return previous;
       });
     });
@@ -49,18 +49,18 @@ export function MidiProvider(props: { children: React.ReactNode }) {
       MidiController.getDevices().then((devices) => {
         if (cancelInfo.cancelled) return;
         setAvailableInputs([
-          ...baseMidiInputs,
+          ...midiInputs.base,
           ...devices.map((device) => ({
             value: device.id.toString(),
             label: `${device.productName} (${device.id})`,
           })),
         ]);
         settings.midiInput.setValue((previous) => {
-          if (previous === defaultMidiInput) return previous;
+          if (previous === midiInputs.default) return previous;
           const device = devices.find(
             (device) => device.id.toString() === previous
           );
-          if (!device) return defaultMidiInput;
+          if (!device) return midiInputs.default;
           return previous;
         });
       });

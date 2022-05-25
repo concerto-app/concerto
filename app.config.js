@@ -40,7 +40,10 @@ export default {
     visible: "immersive",
   },
   extra: {
-    serverUrl: process.env.SERVER_URL,
+    theatreAddress: process.env.THEATRE_ADDRESS,
+    gruppettoAddress: process.env.GRUPPETTO_ADDRESS,
+    gruppettoUser: process.env.GRUPPETTO_USER,
+    gruppettoPassword: process.env.GRUPPETTO_PASSWORD,
   },
   plugins: [
     [
