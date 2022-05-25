@@ -7,6 +7,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import Stack from "./src/navigation/Stack";
 import Play from "./src/screens/Play";
 import Settings from "./src/screens/Settings";
+import Error from "./src/screens/Error";
 import { gestureHandlerRootHOC } from "react-native-gesture-handler";
 import * as SplashScreen from "expo-splash-screen";
 import React from "react";
@@ -17,8 +18,6 @@ import { MidiProvider } from "./src/contexts/midi";
 import { RoomProvider } from "./src/contexts/room";
 import { PlayerProvider } from "./src/contexts/player";
 import { LogBox } from "react-native";
-import useFetch from "./src/hooks/useFetch";
-import { EntriesResponse } from "./src/server/models";
 import { fonts, iceServers, urls } from "./src/constants";
 
 LogBox.ignoreLogs([
@@ -29,12 +28,12 @@ LogBox.ignoreLogs([
 const mainScreen = gestureHandlerRootHOC(Main);
 const playScreen = gestureHandlerRootHOC(Play);
 const settingsScreen = gestureHandlerRootHOC(Settings);
+const errorScreen = gestureHandlerRootHOC(Error);
 
 export default function App() {
   useDeviceContext(tw);
 
   const [fontsLoaded] = useFonts(fonts);
-  const { data } = useFetch<EntriesResponse>(urls.entries);
 
   const onLayoutReady = React.useCallback(
     async () => await SplashScreen.hideAsync(),
@@ -45,7 +44,7 @@ export default function App() {
     SplashScreen.preventAutoHideAsync().then();
   }, []);
 
-  if (!fontsLoaded || data === undefined) return null;
+  if (!fontsLoaded) return null;
 
   return (
     <NavigationContainer onReady={onLayoutReady}>
@@ -64,11 +63,6 @@ export default function App() {
                   <Stack.Screen
                     name="main"
                     component={mainScreen}
-                    initialParams={{
-                      availableEmojiCodes: data.available.map(
-                        (emoji) => emoji.id
-                      ),
-                    }}
                     options={{ orientation: "default" }}
                   />
                   <Stack.Screen
@@ -79,6 +73,11 @@ export default function App() {
                   <Stack.Screen
                     name="settings"
                     component={settingsScreen}
+                    options={{ orientation: "default" }}
+                  />
+                  <Stack.Screen
+                    name="error"
+                    component={errorScreen}
                     options={{ orientation: "default" }}
                   />
                 </Stack.Navigator>
