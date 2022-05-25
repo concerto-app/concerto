@@ -15,6 +15,7 @@ import { useSettings } from "../contexts/settings";
 import useAppSelector from "../hooks/useAppSelector";
 import { useMidi } from "../contexts/midi";
 import { usePlayer } from "../contexts/player";
+import Loading from "../components/Loading";
 
 const margins = {
   vertical: 16,
@@ -123,7 +124,7 @@ export default function Settings({ navigation }: SettingsProps) {
     [settings.midiInput.setValue]
   );
 
-  if (!code) return null;
+  if (!code) return <Loading />;
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>

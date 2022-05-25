@@ -1,6 +1,8 @@
 import Constants from "expo-constants";
 import { Nunito_700Bold, Nunito_800ExtraBold } from "@expo-google-fonts/nunito";
 
+export const codeLength = 3;
+
 export const fonts = {
   Nunito_700Bold,
   Nunito_800ExtraBold,

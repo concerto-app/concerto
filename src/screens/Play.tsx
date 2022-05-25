@@ -23,6 +23,7 @@ import { useMidi } from "../contexts/midi";
 import { usePlayer } from "../contexts/player";
 import { User } from "../server/models";
 import { midiInputs } from "../constants";
+import Loading from "../components/Loading";
 
 type KeyboardState = Map<number, string>;
 
@@ -73,6 +74,11 @@ export default function Play({ navigation }: PlayProps) {
   const [keyboardState, setKeyboardState] = React.useState<KeyboardState>(
     new Map()
   );
+
+  const [roomReady, setRoomReady] = React.useState<boolean>(false);
+  const [playerReady, setPlayerReady] = React.useState<boolean>(false);
+
+  const [error, setError] = React.useState<string>();
 
   const room = useRoom();
   const midi = useMidi();
@@ -235,28 +241,36 @@ export default function Play({ navigation }: PlayProps) {
     [player.player]
   );
 
-  useCancellable(() => {
-    if (!code) return;
-    room
-      .connect(
-        code,
-        handleRoomConnected,
-        handleUserConnected,
-        handleUserDisconnected,
-        handleRoomEvent
-      )
-      .then();
-    return () => {
-      room.disconnect().then();
-    };
-  }, [
-    room,
-    JSON.stringify(code),
-    handleRoomConnected,
-    handleUserConnected,
-    handleUserDisconnected,
-    handleRoomEvent,
-  ]);
+  useCancellable(
+    (cancelInfo) => {
+      if (!code) return;
+      room
+        .connect(
+          code,
+          handleRoomConnected,
+          handleUserConnected,
+          handleUserDisconnected,
+          handleRoomEvent
+        )
+        .then(() => {
+          if (!cancelInfo.cancelled) setRoomReady(true);
+        })
+        .catch(() => {
+          if (!cancelInfo.cancelled) setError("Can't connect to room.");
+        });
+      return () => {
+        room.disconnect().then();
+      };
+    },
+    [
+      room,
+      JSON.stringify(code),
+      handleRoomConnected,
+      handleUserConnected,
+      handleUserDisconnected,
+      handleRoomEvent,
+    ]
+  );
 
   useCancellable(() => {
     if (
@@ -280,20 +294,35 @@ export default function Play({ navigation }: PlayProps) {
     handleUserMidiKeyPressedOut,
   ]);
 
-  useCancellable(() => {
-    if (settings.instrument.value === undefined) return;
+  useCancellable(
+    (cancelInfo) => {
+      if (settings.instrument.value === undefined) return;
 
-    const load = async (instrument: string, notes: number[]) => {
-      await player.player.unload();
-      await player.player.load(instrument, notes);
-    };
+      const load = async (instrument: string, notes: number[]) => {
+        await player.player.unload();
+        await player.player.load(instrument, notes);
+      };
 
-    load(settings.instrument.value, allNotes).then();
+      load(settings.instrument.value, allNotes)
+        .then(() => {
+          if (!cancelInfo.cancelled) setPlayerReady(true);
+        })
+        .catch(() => {
+          if (!cancelInfo.cancelled) setError("Can't load sound player.");
+        });
 
-    return () => {
-      player.player.unload().then();
-    };
-  }, [player.player, settings.instrument.value, JSON.stringify(allNotes)]);
+      return () => {
+        player.player.unload().then();
+      };
+    },
+    [player.player, settings.instrument.value, JSON.stringify(allNotes)]
+  );
+
+  React.useEffect(() => {
+    if (error !== undefined) navigation.navigate("error", { message: error });
+  }, [navigation, error]);
+
+  if (!roomReady || !playerReady || user === undefined) return <Loading />;
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>

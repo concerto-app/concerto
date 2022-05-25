@@ -46,14 +46,22 @@ export default class ServerConnection {
     return await this.lock.acquire("connection", async () => {
       const ws = new WebSocket(url);
 
-      const open = new Promise<void>((resolve) => {
+      const open = new Promise<void>((resolve, reject) => {
         const onOpen = () => {
           ws.send(JSON.stringify(ServerConnection.createRequestMessage(code)));
           ws.removeEventListener("open", onOpen);
+          ws.removeEventListener("error", onError);
           resolve();
         };
 
+        const onError = (e: Event) => {
+          ws.removeEventListener("error", onError);
+          ws.removeEventListener("open", onOpen);
+          reject(e);
+        };
+
         ws.addEventListener("open", onOpen);
+        ws.addEventListener("error", onError);
 
         this.callbacks.forEach((callback, event) =>
           ws.addEventListener(event, callback)

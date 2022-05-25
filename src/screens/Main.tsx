@@ -10,11 +10,15 @@ import useAppDispatch from "../hooks/useAppDispatch";
 import { resetCode, setCode } from "../state/slices/code";
 import useCancellable from "../hooks/useCancellable";
 import { resetUsers } from "../state/slices/users";
+import { codeLength, urls } from "../constants";
+import useFetch from "../hooks/useFetch";
+import { EntriesResponse } from "../server/models";
+import Loading from "../components/Loading";
 
 export default function Main({ route, navigation }: MainProps) {
-  const { availableEmojiCodes, codeLength = 3 } = route.params;
-
   const [localCode, setLocalCode] = React.useState<Array<string>>([]);
+
+  const { status, data, error } = useFetch<EntriesResponse>(urls.entries);
 
   const dispatch = useAppDispatch();
 
@@ -34,6 +38,11 @@ export default function Main({ route, navigation }: MainProps) {
     };
   }, [navigation]);
 
+  React.useEffect(() => {
+    if (error !== undefined)
+      navigation.navigate("error", { message: "Can't connect to server" });
+  }, [navigation, JSON.stringify(error)]);
+
   useCancellable(
     (cancelInfo) => {
       if (localCode.length < codeLength) return;
@@ -44,6 +53,9 @@ export default function Main({ route, navigation }: MainProps) {
     },
     [JSON.stringify(localCode)]
   );
+
+  if (status === "idle" || status === "fetching" || data === undefined)
+    return <Loading />;
 
   return (
     <ReactNative.View style={tw.style("flex-1", "bg-white")}>
@@ -62,7 +74,7 @@ export default function Main({ route, navigation }: MainProps) {
         style={tw.style("flex-1", "items-center", "justify-center")}
       >
         <EmojiGrid
-          emojiIds={availableEmojiCodes}
+          emojiIds={data.available.map((emoji) => emoji.id)}
           onEmojiSelected={onEmojiSelected}
           style={tw.style("my-4")}
         />
