@@ -76,7 +76,7 @@ export default function Main({ route, navigation }: MainProps) {
         <EmojiGrid
           emojiIds={data.available.map((emoji) => emoji.id)}
           onEmojiSelected={onEmojiSelected}
-          style={tw.style("my-4")}
+          style={tw.style("my-8")}
         />
       </ReactNative.View>
     </ReactNative.View>
