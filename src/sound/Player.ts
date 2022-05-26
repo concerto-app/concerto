@@ -3,6 +3,7 @@ import * as FileSystem from "expo-file-system";
 import Sound from "./Sound";
 import { getFullName } from "./utils";
 import AsyncLock from "async-lock";
+import { timing } from "../constants";
 
 export default class Player {
   private loaded: boolean = false;
@@ -96,8 +97,13 @@ export default class Player {
         this.playingSounds.delete(note);
     });
 
-    if (previousSound)
-      this._timeout(async () => await this._decaySound(previousSound, 100));
+    if (previousSound) {
+      const volume = (await previousSound.getVolume()) || 1.0;
+      this._timeout(
+        async () =>
+          await this._decaySound(previousSound, volume * timing.decayDelay)
+      );
+    }
   }
 
   async _stopSound(note: number, velocity: number) {
@@ -109,8 +115,14 @@ export default class Player {
 
     this.playingSounds.delete(note);
 
+    const volume = (await sound.getVolume()) || 1.0;
+
     this._timeout(
-      async () => await this._decaySound(sound, 100 + (1 - velocity) * 400)
+      async () =>
+        await this._decaySound(
+          sound,
+          volume * (timing.decayDelay + (1 - velocity) * timing.decayDuration)
+        )
     );
   }
 

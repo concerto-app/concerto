@@ -4,6 +4,7 @@ import Marker from "../Marker";
 import Emoji from "../emojis/Emoji";
 import React from "react";
 import equal from "fast-deep-equal/react";
+import { timing } from "../../constants";
 
 export type PressedInfo = {
   emojiId: string;
@@ -93,14 +94,14 @@ export default function Key({
     opacityAnimation.stopAnimation();
 
     if (pressed === undefined) {
-      const timing = ReactNative.Animated.timing(opacityAnimation, {
+      const animation = ReactNative.Animated.timing(opacityAnimation, {
         toValue: 0.0,
-        duration: 100,
+        duration: timing.releaseAnimationDuration,
         useNativeDriver: true,
       });
 
-      timing.start();
-      return () => timing.stop();
+      animation.start();
+      return () => animation.stop();
     } else {
       opacityAnimation.setValue(1.0);
     }
