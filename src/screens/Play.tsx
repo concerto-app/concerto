@@ -7,7 +7,6 @@ import { BorderlessButton, ScrollView } from "react-native-gesture-handler";
 import Marker from "../components/Marker";
 import Emoji from "../components/emojis/Emoji";
 import Indicator from "../components/Indicator";
-import { mapMap } from "../utils";
 import Player from "../sound/Player";
 import { useSettings } from "../contexts/settings";
 import KeyboardHintOverlay from "../components/keyboard/KeyboardHintOverlay";
@@ -24,8 +23,9 @@ import { usePlayer } from "../contexts/player";
 import { User } from "../server/models";
 import { midiInputs } from "../constants";
 import Loading from "../components/Loading";
-
-type KeyboardState = Map<number, string>;
+import { useStore } from "react-redux";
+import { RootState } from "../state/store";
+import { press, release } from "../state/slices/keyboard";
 
 const octaves = 7;
 const buttonSize = 45;
@@ -33,7 +33,7 @@ const buttonMargin = 16;
 
 const allNotes = getNotesForRange(octaves);
 
-const fallbackEmoji = "1f32d";
+const fallbackEmoji = "2754";
 
 function SettingsButton({
   text,
@@ -71,9 +71,6 @@ function SettingsButton({
 
 export default function Play({ navigation }: PlayProps) {
   const [scrolling, setScrolling] = React.useState<boolean>(false);
-  const [keyboardState, setKeyboardState] = React.useState<KeyboardState>(
-    new Map()
-  );
 
   const [roomReady, setRoomReady] = React.useState<boolean>(false);
   const [playerReady, setPlayerReady] = React.useState<boolean>(false);
@@ -85,6 +82,7 @@ export default function Play({ navigation }: PlayProps) {
   const player = usePlayer();
   const settings = useSettings();
 
+  const store = useStore();
   const dispatch = useAppDispatch();
   const code = useAppSelector((state) => state.code.code);
   const users = useAppSelector((state) => state.users.users);
@@ -94,34 +92,35 @@ export default function Play({ navigation }: PlayProps) {
   const getUserEmoji = (userId: string) =>
     users.find((user) => user.id === userId)?.emoji;
 
-  const handleKeyPressedIn = (
-    player: Player,
-    note: number,
-    user: string,
-    velocity: number
-  ) => {
-    setKeyboardState((prevState) => {
-      if (prevState.has(note)) return prevState;
+  const handleKeyPressedIn = React.useCallback(
+    (player: Player, note: number, user: string, velocity: number) => {
+      const prevState = store.getState() as RootState;
+      if (note in prevState.keyboard.pressed) return;
       player.start(note, velocity).then();
-      return new Map(prevState).set(note, user);
-    });
-  };
+      dispatch(
+        press({
+          note: note,
+          user: user,
+        })
+      );
+    },
+    [store]
+  );
 
-  const handleKeyPressedOut = (
-    player: Player,
-    note: number,
-    user: string,
-    velocity: number
-  ) => {
-    setKeyboardState((prevState) => {
-      if (!prevState.has(note) || prevState.get(note) !== user)
-        return prevState;
+  const handleKeyPressedOut = React.useCallback(
+    (player: Player, note: number, user: string, velocity: number) => {
+      const prevState = store.getState() as RootState;
+      if (prevState.keyboard.pressed[note] !== user) return;
       player.stop(note, velocity).then();
-      const stateCopy = new Map(prevState);
-      stateCopy.delete(note);
-      return stateCopy;
-    });
-  };
+      dispatch(
+        release({
+          note: note,
+          user: user,
+        })
+      );
+    },
+    [store]
+  );
 
   const handleUserKeyPressedIn = React.useCallback(
     (note: number, velocity: number) => {
@@ -238,7 +237,7 @@ export default function Play({ navigation }: PlayProps) {
           );
       }
     },
-    [player.player]
+    [player.player, handleKeyPressedIn, handleKeyPressedOut]
   );
 
   useCancellable(
@@ -336,9 +335,6 @@ export default function Play({ navigation }: PlayProps) {
         <ReactNative.View style={{ flex: 1, justifyContent: "flex-end" }}>
           <ReactNative.View>
             <Keyboard
-              pressedKeys={mapMap(keyboardState, (user) => ({
-                emojiId: getUserEmoji(user) || fallbackEmoji,
-              }))}
               onKeyPressedIn={handleUserScreenKeyPressedIn}
               onKeyPressedOut={handleUserScreenKeyPressedOut}
               octavesNumber={octaves}
@@ -362,7 +358,7 @@ export default function Play({ navigation }: PlayProps) {
       >
         <SettingsButton
           text={users.length.toString()}
-          emojiId={user ? getUserEmoji(user) || fallbackEmoji : fallbackEmoji}
+          emojiId={getUserEmoji(user) || fallbackEmoji}
           size={buttonSize}
           margin={buttonMargin}
           onPress={handleSettingsButtonPress}
