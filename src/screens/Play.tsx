@@ -243,20 +243,24 @@ export default function Play({ navigation }: PlayProps) {
   useCancellable(
     (cancelInfo) => {
       if (!code) return;
-      room
-        .connect(
-          code,
-          handleRoomConnected,
-          handleUserConnected,
-          handleUserDisconnected,
-          handleRoomEvent
-        )
-        .then(() => {
-          if (!cancelInfo.cancelled) setRoomReady(true);
-        })
-        .catch(() => {
-          if (!cancelInfo.cancelled) setError("Can't connect to room.");
-        });
+      setRoomReady(false);
+      room.disconnect().then(() => {
+        if (cancelInfo.cancelled) return;
+        room
+          .connect(
+            code,
+            handleRoomConnected,
+            handleUserConnected,
+            handleUserDisconnected,
+            handleRoomEvent
+          )
+          .then(() => {
+            if (!cancelInfo.cancelled) setRoomReady(true);
+          })
+          .catch(() => {
+            if (!cancelInfo.cancelled) setError("Can't connect to room.");
+          });
+      });
       return () => {
         room.disconnect().then();
       };
@@ -296,6 +300,8 @@ export default function Play({ navigation }: PlayProps) {
   useCancellable(
     (cancelInfo) => {
       if (settings.instrument.value === undefined) return;
+
+      setPlayerReady(false);
 
       const load = async (instrument: string, notes: number[]) => {
         await player.player.unload();
