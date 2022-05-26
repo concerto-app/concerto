@@ -2,7 +2,7 @@ import ReactNative from "react-native";
 import tw from "../tailwind";
 import Heading from "./text/Heading";
 
-export type LoadingProps = ReactNative.ViewProps;
+export type LoadingProps = {};
 
 export default function Loading(props: LoadingProps) {
   return (

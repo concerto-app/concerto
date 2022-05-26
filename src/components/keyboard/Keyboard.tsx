@@ -4,7 +4,6 @@ import tw from "../../tailwind";
 import BlackKey from "./BlackKey";
 import React from "react";
 import Touchable from "../Touchable";
-import { PressedInfo } from "./Key";
 import equal from "fast-deep-equal/react";
 import { KeyboardProps } from "./types";
 import {
@@ -16,6 +15,7 @@ import {
 } from "./constants";
 import { getName, toNote } from "../../sound/utils";
 import { blackNoteNames, whiteNoteNames } from "../../sound/constants";
+import useAppSelector from "../../hooks/useAppSelector";
 
 type InternalKeyProps = {
   note: number;
@@ -25,13 +25,23 @@ type InternalKeyProps = {
   keyWidth: number;
   keyHeight: number;
   keyDepth: number;
-  pressed?: PressedInfo;
 };
 
 type InternalWhiteKeyProps = InternalKeyProps;
 type InternalBlackKeyProps = InternalKeyProps & { whiteKeyWidth: number };
 
+const MemoizedWhiteKey = React.memo(WhiteKey, equal);
+const MemoizedBlackKey = React.memo(BlackKey, equal);
+
 const InternalWhiteKey = (props: InternalWhiteKeyProps) => {
+  const user = useAppSelector((state) => state.keyboard.pressed[props.note]);
+  const emoji = useAppSelector(
+    (state) => state.users.users.find((u) => u.id === user)?.emoji
+  );
+
+  const pressed =
+    user === undefined || emoji === undefined ? undefined : { emojiId: emoji };
+
   return (
     <ReactNative.View
       style={{
@@ -45,11 +55,11 @@ const InternalWhiteKey = (props: InternalWhiteKeyProps) => {
         onPressIn={() => props.onKeyPressedIn(props.note)}
         onPressOut={() => props.onKeyPressedOut(props.note)}
       >
-        <WhiteKey
+        <MemoizedWhiteKey
           width={props.keyWidth}
           height={props.keyHeight}
           borderWidth={0}
-          pressed={props.pressed}
+          pressed={pressed}
           pressedColor={noteNameColors[getName(props.note)]}
           depth={props.keyDepth}
         />
@@ -58,40 +68,49 @@ const InternalWhiteKey = (props: InternalWhiteKeyProps) => {
   );
 };
 
-const InternalBlackKey = (props: InternalBlackKeyProps) => (
-  <ReactNative.View
-    style={{
-      position: "absolute",
-      start:
-        blacksGapIndex[getName(props.note)] *
-          (props.whiteKeyWidth + props.spacing) -
-        0.5 * props.spacing -
-        0.5 * (props.keyWidth + 2 * props.spacing),
-    }}
-  >
-    <Touchable
-      activeOpacity={1.0}
-      onPressIn={() => props.onKeyPressedIn(props.note)}
-      onPressOut={() => props.onKeyPressedOut(props.note)}
-    >
-      <BlackKey
-        width={props.keyWidth}
-        height={props.keyHeight}
-        borderWidth={props.spacing}
-        pressed={props.pressed}
-        pressedColor={noteNameColors[getName(props.note)]}
-        style={tw.style("shadow-xl")}
-        depth={props.keyDepth}
-      />
-    </Touchable>
-  </ReactNative.View>
-);
+const InternalBlackKey = (props: InternalBlackKeyProps) => {
+  const user = useAppSelector((state) => state.keyboard.pressed[props.note]);
+  const emoji = useAppSelector(
+    (state) => state.users.users.find((u) => u.id === user)?.emoji
+  );
 
-const MemoizedWhiteKey = React.memo(InternalWhiteKey, equal);
-const MemoizedBlackKey = React.memo(InternalBlackKey, equal);
+  const pressed =
+    user === undefined || emoji === undefined ? undefined : { emojiId: emoji };
+
+  return (
+    <ReactNative.View
+      style={{
+        position: "absolute",
+        start:
+          blacksGapIndex[getName(props.note)] *
+            (props.whiteKeyWidth + props.spacing) -
+          0.5 * props.spacing -
+          0.5 * (props.keyWidth + 2 * props.spacing),
+      }}
+    >
+      <Touchable
+        activeOpacity={1.0}
+        onPressIn={() => props.onKeyPressedIn(props.note)}
+        onPressOut={() => props.onKeyPressedOut(props.note)}
+      >
+        <MemoizedBlackKey
+          width={props.keyWidth}
+          height={props.keyHeight}
+          borderWidth={props.spacing}
+          pressed={pressed}
+          pressedColor={noteNameColors[getName(props.note)]}
+          style={tw.style("shadow-xl")}
+          depth={props.keyDepth}
+        />
+      </Touchable>
+    </ReactNative.View>
+  );
+};
+
+const MemoizedInternalWhiteKey = React.memo(InternalWhiteKey, equal);
+const MemoizedInternalBlackKey = React.memo(InternalBlackKey, equal);
 
 export default function Keyboard({
-  pressedKeys,
   octavesNumber = defaultKeyboardLayoutProps.octavesNumber,
   borderColor = "#252525",
   keyWidth = defaultKeyboardLayoutProps.keyWidth,
@@ -115,7 +134,7 @@ export default function Keyboard({
     whiteNoteNames.map((noteName) => {
       const note = toNote(noteName, octave);
       return (
-        <MemoizedWhiteKey
+        <MemoizedInternalWhiteKey
           key={note}
           note={note}
           spacing={spacing}
@@ -124,7 +143,6 @@ export default function Keyboard({
           keyWidth={keyWidth}
           keyHeight={keyHeight}
           keyDepth={keyDepth}
-          pressed={pressedKeys.get(note)}
         />
       );
     });
@@ -133,7 +151,7 @@ export default function Keyboard({
     blackNoteNames.map((noteName) => {
       const note = toNote(noteName, octave);
       return (
-        <MemoizedBlackKey
+        <MemoizedInternalBlackKey
           key={note}
           note={note}
           spacing={spacing}
@@ -143,7 +161,6 @@ export default function Keyboard({
           keyHeight={blackKeyHeight}
           keyDepth={keyDepth}
           whiteKeyWidth={keyWidth}
-          pressed={pressedKeys.get(note)}
         />
       );
     });
