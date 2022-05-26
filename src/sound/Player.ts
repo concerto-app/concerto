@@ -52,7 +52,7 @@ export default class Player {
   async _decaySound(
     sound: Sound,
     duration: number,
-    interval: number = 10,
+    interval: number = 50,
     gainDecrement?: number
   ) {
     const volume = await sound.getVolume();
