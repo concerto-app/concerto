@@ -48,9 +48,8 @@ function KeyboardHintOverlay({
               >
                 <ReactNative.View
                   style={{
-                    width: 0.5 * keyWidth,
-                    height: 0.5 * keyWidth,
-                    margin: 0.25 * keyWidth,
+                    width: keyWidth,
+                    height: keyWidth,
                     alignItems: "center",
                     justifyContent: "center",
                   }}
@@ -88,9 +87,8 @@ function KeyboardHintOverlay({
               >
                 <ReactNative.View
                   style={{
-                    width: 0.5 * blackKeyWidth,
-                    height: 0.5 * blackKeyWidth,
-                    margin: 0.25 * blackKeyWidth,
+                    width: blackKeyWidth,
+                    height: blackKeyWidth,
                     alignItems: "center",
                     justifyContent: "center",
                   }}
