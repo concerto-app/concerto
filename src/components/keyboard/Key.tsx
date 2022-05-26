@@ -85,6 +85,27 @@ export default function Key({
   style,
   ...otherProps
 }: KeyProps) {
+  const opacityAnimation = React.useRef(
+    new ReactNative.Animated.Value(0.0)
+  ).current;
+
+  React.useEffect(() => {
+    opacityAnimation.stopAnimation();
+
+    if (pressed === undefined) {
+      const timing = ReactNative.Animated.timing(opacityAnimation, {
+        toValue: 0.0,
+        duration: 100,
+        useNativeDriver: true,
+      });
+
+      timing.start();
+      return () => timing.stop();
+    } else {
+      opacityAnimation.setValue(1.0);
+    }
+  }, [JSON.stringify(pressed)]);
+
   return (
     <ReactNative.View
       style={[
@@ -94,9 +115,10 @@ export default function Key({
           height: height + 2 * borderWidth,
           borderBottomLeftRadius: borderRadius,
           borderBottomRightRadius: borderRadius,
-          backgroundColor: pressed ? pressedColor : sideColor,
+          backgroundColor: sideColor,
           borderWidth: borderWidth,
           borderColor: borderColor,
+          overflow: "hidden",
         },
       ]}
       {...otherProps}
@@ -106,7 +128,7 @@ export default function Key({
           width: width,
           height: height,
           position: "absolute",
-          display: pressed ? "none" : "flex",
+          display: "flex",
         }}
       >
         <MemoizedReleasedForeground
@@ -117,16 +139,18 @@ export default function Key({
           radius={borderRadius}
         />
       </ReactNative.View>
-      <ReactNative.View
+      <ReactNative.Animated.View
         style={{
           width: width,
           height: height,
           position: "absolute",
-          display: pressed ? "flex" : "none",
+          display: "flex",
+          backgroundColor: pressedColor,
+          opacity: opacityAnimation,
         }}
       >
         <MemoizedPressedForeground width={width} emojiId={pressed?.emojiId} />
-      </ReactNative.View>
+      </ReactNative.Animated.View>
     </ReactNative.View>
   );
 }
